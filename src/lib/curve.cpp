@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2009  Gaetan Guidet
+Copyright (C) 2009, 2010  Gaetan Guidet
 
 This file is part of gmath.
 
@@ -25,4 +25,42 @@ USA.
 
 
 namespace gmath {
+
+size_t Curve::InvalidIndex = size_t(-1);
+
+Curve::Curve()
+  : mPreInf(Curve::IF_CONSTANT), mPostInf(Curve::IF_CONSTANT) {
+}
+
+Curve::Curve(const Curve &rhs)
+  : mPreInf(rhs.mPreInf), mPostInf(rhs.mPostInf) {
+}
+
+Curve::~Curve() {
+}
+
+Curve& Curve::operator=(const Curve &rhs) {
+  if (this != &rhs) {
+    mPreInf = rhs.mPreInf;
+    mPostInf = rhs.mPostInf;
+  }
+  return *this;
+}
+
+void Curve::setPreInfinity(Curve::Infinity it) {
+  mPreInf = it;
+}
+
+void Curve::setPostInfinity(Curve::Infinity it) {
+  mPostInf = it;
+}
+
+Curve::Infinity Curve::getPreInfinity() const {
+  return mPreInf;
+}
+
+Curve::Infinity Curve::getPostInfinity() const {
+  return mPostInf;
+}
+
 }

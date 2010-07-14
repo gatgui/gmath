@@ -47,6 +47,7 @@ USA.
 
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
