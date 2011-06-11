@@ -194,11 +194,11 @@ namespace gmath {
 template <unsigned int d>
 inline std::ostream& operator<<(std::ostream &os, const gmath::LinearSystem<d> l) {
   os << "LinSys{";
-	for (unsigned int i=0; i<d; ++i) {
-		os << "{" << l[i] << "}" << std::endl;
-	}
+  for (unsigned int i=0; i<d; ++i) {
+    os << "{" << l[i] << "}" << std::endl;
+  }
   os << "}";
-	return os;
+  return os;
 }
 
 #endif

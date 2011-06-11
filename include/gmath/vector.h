@@ -225,12 +225,14 @@ namespace gmath {
         }
         return *this;
       }
+      // -> read as minimum of two
       inline Vector3& floor(const Vector3 &rhs) {
         x = (x > rhs.x) ? rhs.x : x;
         y = (y > rhs.y) ? rhs.y : y;
         z = (z > rhs.z) ? rhs.z : z;
         return *this;
       }
+      // -> read as maximum of two
       inline Vector3& ceil(const Vector3 &rhs) {
         x = (x < rhs.x) ? rhs.x : x;
         y = (y < rhs.y) ? rhs.y : y;
@@ -330,10 +332,10 @@ namespace gmath {
       inline explicit Vector4(const float *v)
         :x(v[0]), y(v[1]), z(v[2]), w(v[3]) {
       }
-      inline explicit Vector4(const Vector3 &v3, float v=1)
+      inline explicit Vector4(const Vector3 &v3, float v=1.0f)
         :x(v3.x), y(v3.y), z(v3.z), w(v) {
       }
-      inline explicit Vector4(float a, float b, float c, float d)
+      inline explicit Vector4(float a, float b, float c, float d=1.0f)
         :x(a), y(b), z(c), w(d) {
       }
       inline Vector4(const Vector4 &rhs)
@@ -349,6 +351,13 @@ namespace gmath {
           z = rhs.z;
           w = rhs.w;
         }
+        return *this;
+      }
+      inline Vector4& operator=(const Vector3 &rhs) {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        w = 1.0f;
         return *this;
       }
       
@@ -429,6 +438,12 @@ namespace gmath {
         zero();
       }
       
+      inline Vector(float v) {
+        for (unsigned int i=0; i<dim; ++i) {
+          values[i] = v;
+        }
+      }
+      
       inline Vector(const float *v) {
         memcpy(values, v, dim*sizeof(float));
       }
@@ -473,6 +488,10 @@ namespace gmath {
       inline ~Vector() {
       }
       
+      inline unsigned int size() const {
+        return dim;
+      }
+      
       inline void zero() {
         memset(values, 0, dim*sizeof(float));
       }
@@ -489,15 +508,49 @@ namespace gmath {
         return r;
       }
       
+      inline float getSquaredLength() const {
+        return dot(*this);
+      }
+      
+      inline float getLength() const {
+        return Sqrt(getSquaredLength());
+      }
+      
+      inline Vector<dim>& normalize() {
+        float l = getSquaredLength();
+        if (l > EPS6) {
+          l = 1.0f / Sqrt(l);
+          for (unsigned int i=0; i<dim; ++i) {
+            values[i] *= l;
+          }
+        }
+        return *this;
+      }
+      
+      inline Vector<dim>& floor(const Vector<dim> &rhs) {
+        for (unsigned int i=0; i<dim; ++i) {
+          values[i] = (values[i] > rhs.values[i]) ? rhs.values[i] : values[i];
+        }
+        return *this;
+      }
+      
+      inline Vector<dim>& ceil(const Vector<dim> &rhs) {
+        for (unsigned int i=0; i<dim; ++i) {
+          values[i] = (values[i] < rhs.values[i]) ? rhs.values[i] : values[i];
+        }
+        return *this;
+      }
+      
       inline void swap(unsigned int i, unsigned int j) {
         float tmp = values[i];
         values[i] = values[j];
         values[j] = tmp;
       }
       
-      inline Vector<dim>& operator=(const Vector<dim> &rhs) {
-        if (this != &rhs) {
-          memcpy(values, rhs.values, dim*sizeof(float));
+      template <unsigned int D>
+      inline Vector<dim>& operator=(const Vector<D> &rhs) {
+        if (&(values[0]) != &(rhs.values[0])) {
+          memcpy(values, rhs.values, (D < dim ? D : dim)*sizeof(float));
         }
         return *this;
       }
@@ -541,8 +594,8 @@ namespace gmath {
       inline float operator[](unsigned int i) const {
         return values[i];
       }
-    
-    protected:
+      
+    public:
       
       float values[dim];
   };
@@ -585,7 +638,7 @@ inline gmath::Vector2 operator*(float f, const gmath::Vector2 &v) {
   return tmp;
 }
 inline std::ostream& operator<<(std::ostream &os, const gmath::Vector2 &rhs) {
-  os << "Vector2(" << rhs.x << ", " << rhs.y << ")";
+  os << "(" << rhs.x << ", " << rhs.y << ")";
   return os;
 }
 
@@ -625,7 +678,7 @@ inline gmath::Vector3 operator*(float f, const gmath::Vector3 &v) {
   return tmp;
 }
 inline std::ostream& operator<<(std::ostream &os, const gmath::Vector3 &rhs) {
-  os << "Vector3(" << rhs.x << ", " << rhs.y << ", " << rhs.z << ")";
+  os << "(" << rhs.x << ", " << rhs.y << ", " << rhs.z << ")";
   return os;
 }
 
@@ -666,7 +719,7 @@ inline gmath::Vector4 operator*(float f, const gmath::Vector4 &v) {
   return tmp;
 }
 inline std::ostream& operator<<(std::ostream &os, const gmath::Vector4 &rhs) {
-  os << "Vector4(" << rhs.x << ", " << rhs.y << ", " << rhs.z << ", " << rhs.w << ")";
+  os << "(" << rhs.x << ", " << rhs.y << ", " << rhs.z << ", " << rhs.w << ")";
   return os;
 }
 
@@ -709,7 +762,7 @@ inline gmath::Vector<d> operator*(float s, const gmath::Vector<d> &v) {
 
 template <unsigned int d>
 inline std::ostream& operator<<(std::ostream &os, const gmath::Vector<d> &v) {
-  os << "VectorN(";
+  os << "(";
 	for (unsigned int i=0; i<(d-1); ++i) {
 		os << v[i] << ", ";
 	}

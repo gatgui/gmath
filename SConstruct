@@ -1,7 +1,7 @@
 import glob
 import excons
 import excons.tools
-from excons.tools import lua
+from excons.tools import lua, gl, glut
 
 prjs = [
   { "name"    : "gmath",
@@ -9,6 +9,13 @@ prjs = [
     "incdirs" : ["include"],
     "srcs"    : glob.glob("src/lib/*.cpp"),
     "defs"    : ["GMATH_EXPORTS"]
+  },
+  { "name"    : "tests",
+    "type"    : "testprograms",
+    "incdirs" : ["include"],
+    "srcs"    : glob.glob("src/test/*.cpp"),
+    "libs"    : ["gmath"],
+    "custom"  : [gl.Require, glut.Require]
   },
   { "name"    : "luagmath",
     "type"    : "dynamicmodule",
