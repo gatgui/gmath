@@ -1,4 +1,5 @@
 .build
 .sconsign.dblite
+.DS_Store
 release
 debug

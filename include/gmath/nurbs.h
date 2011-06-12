@@ -65,34 +65,34 @@ namespace gmath
     
     // cvs access
     long getNumCVs() const;
-    void setNumCVs(size_t n);
-    const CV& getCV(size_t idx) const;
-    void setCV(size_t idx, const CV &cv);
+    void setNumCVs(long n);
+    const CV& getCV(long idx) const;
+    void setCV(long idx, const CV &cv);
     long getCVs(CVArray &cvs) const;
     void setCVs(const CVArray &cvs);
-    Point getPoint(size_t idx) const;
-    void setPoint(size_t idx, const Point &p);
+    Point getPoint(long idx) const;
+    void setPoint(long idx, const Point &p);
     long getPoints(PointArray &points) const;
     void setPoints(const PointArray &points);
-    float getWeight(size_t idx) const;
-    void setWeight(size_t idx, float w);
+    float getWeight(long idx) const;
+    void setWeight(long idx, float w);
     long getWeights(WeightArray &weights) const;
     void setWeights(const WeightArray &weights);
     long resizeCVs(); // to match knots count
-    void adjustCVsCount(size_t n, float tol=0.01f);
+    void adjustCVsCount(long n, float tol=0.01f);
     
     // knots access
     long getNumKnots() const;
-    void setNumKnots(size_t n);
-    float getKnot(size_t idx) const;
+    void setNumKnots(long n);
+    float getKnot(long idx) const;
     long getKnots(std::vector<float> &knots) const;
-    void setKnot(size_t idx, float k);
+    void setKnot(long idx, float k);
     void setKnots(const std::vector<float> &knots);
     
     // advanced knots operations
     bool insertKnot(float u, long n=1);
-    size_t getKnotMultiplicity(float u, long span=-1) const;
-    size_t getKnotMultiplicity(size_t k) const;
+    long getKnotMultiplicity(float u, long span=-1) const;
+    long getKnotMultiplicity(long k) const;
     void buildKnotsUniform(bool clamp, bool normalize=true);
     void buildKnotsChordLength();
     void buildKnotsCentripetal(float strength=0.5f);
@@ -206,7 +206,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  void NURBS<D>::adjustCVsCount(size_t, float)
+  void NURBS<D>::adjustCVsCount(long, float)
   {
     // TODO
     // keep end points
@@ -279,26 +279,26 @@ namespace gmath
   }
 
   template <unsigned int D>
-  long NURBS<D>::getNumCVs() const
+  inline long NURBS<D>::getNumCVs() const
   {
     return long(mCVs.size());
   }
 
   template <unsigned int D>
-  void NURBS<D>::setNumCVs(size_t n)
+  void NURBS<D>::setNumCVs(long n)
   {
-    mDirty = (n != mCVs.size());
+    mDirty = (n != getNumCVs());
     mCVs.resize(n);
   }
 
   template <unsigned int D>
-  const typename NURBS<D>::CV& NURBS<D>::getCV(size_t idx) const
+  const typename NURBS<D>::CV& NURBS<D>::getCV(long idx) const
   {
     return mCVs[idx];
   }
 
   template <unsigned int D>
-  void NURBS<D>::setCV(size_t idx, const typename NURBS<D>::CV &cv)
+  void NURBS<D>::setCV(long idx, const typename NURBS<D>::CV &cv)
   {
     mCVs[idx] = cv;
   }
@@ -318,13 +318,13 @@ namespace gmath
   }
 
   template <unsigned int D>
-  typename NURBS<D>::Point NURBS<D>::getPoint(size_t idx) const
+  typename NURBS<D>::Point NURBS<D>::getPoint(long idx) const
   {
     return mCVs[idx];
   }
 
   template <unsigned int D>
-  void NURBS<D>::setPoint(size_t idx, const typename NURBS<D>::Point &point)
+  void NURBS<D>::setPoint(long idx, const typename NURBS<D>::Point &point)
   {
     mCVs[idx] = point;
   }
@@ -355,13 +355,13 @@ namespace gmath
   }
 
   template <unsigned int D>
-  float NURBS<D>::getWeight(size_t idx) const
+  float NURBS<D>::getWeight(long idx) const
   {
     return mCVs[idx][D];
   }
 
   template <unsigned int D>
-  void NURBS<D>::setWeight(size_t idx, float w)
+  void NURBS<D>::setWeight(long idx, float w)
   {
     mCVs[idx][D] = w;
   }
@@ -405,20 +405,20 @@ namespace gmath
   }
 
   template <unsigned int D>
-  long NURBS<D>::getNumKnots() const
+  inline long NURBS<D>::getNumKnots() const
   {
     return long(mKnots.size());
   }
 
   template <unsigned int D>
-  void NURBS<D>::setNumKnots(size_t n)
+  void NURBS<D>::setNumKnots(long n)
   {
-    mDirty = (n != mKnots.size());
+    mDirty = (n != getNumKnots());
     mKnots.resize(n);
   }
 
   template <unsigned int D>
-  float NURBS<D>::getKnot(size_t idx) const
+  float NURBS<D>::getKnot(long idx) const
   {
     return mKnots[idx];
   }
@@ -431,7 +431,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  void NURBS<D>::setKnot(size_t idx, float k)
+  void NURBS<D>::setKnot(long idx, float k)
   {
     mKnots[idx] = k;
     mDirty = true; // have to re-check knot sequence
@@ -514,7 +514,7 @@ namespace gmath
     
     k = mid;
     
-    while (size_t(k + 1) < mKnots.size() && u >= mKnots[k+1])
+    while ((k + 1) < getNumKnots() && u >= mKnots[k+1])
     {
       ++k;
     }
@@ -523,7 +523,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  size_t NURBS<D>::getKnotMultiplicity(float u, long span) const
+  long NURBS<D>::getKnotMultiplicity(float u, long span) const
   {
     if (span < 0)
     {
@@ -532,7 +532,7 @@ namespace gmath
         return 0;
       }
     }
-    size_t m = 0;
+    long m = 0;
     long l = span;
     while (l >= 0)
     {
@@ -550,7 +550,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  size_t NURBS<D>::getKnotMultiplicity(size_t k) const
+  long NURBS<D>::getKnotMultiplicity(long k) const
   {
     if (k >= mKnots.size())
     {
@@ -558,11 +558,11 @@ namespace gmath
     }
     
     float u = mKnots[k];
-    size_t m = 1;
+    long m = 1;
     
-    long l = long(k) + 1;
+    long l = k + 1;
     
-    while (l < long(mKnots.size()))
+    while (l < getNumKnots())
     {
       if ((mKnots[l] - u) < 0.000001f)
       {
@@ -575,7 +575,7 @@ namespace gmath
       }
     }
     
-    l = long(k) - 1;
+    l = k - 1;
     
     while (l >= 0)
     {
@@ -871,33 +871,21 @@ namespace gmath
     CV rv, tmp;
     
     rv.zero();
-    //rv = Vector4::ZERO;
-    
-    //size_t widx = long(tmp.size() - 1);
-    //float w = 0.0f;
     
     for (long i=0; i<=mDegree; ++i)
     {
       tmp = mCVs[idx+i];
       for (unsigned int j=0; j<D; ++j) tmp[j] *= tmp[D];
-      //tmp.x *= tmp.w;
-      //tmp.y *= tmp.w;
-      //tmp.z *= tmp.w;
       rv += coeffs[i] * tmp;
     }
     
-    //if (fabs(rv.w) > 0.000001f)
     if (fabs(rv[D]) > 0.000001f)
     {
       r = rv;
       r /= rv[D];
-      //r.x = rv.x / rv.w;
-      //r.y = rv.y / rv.w;
-      //r.z = rv.z / rv.w;
     }
     else
     {
-      //r.x = r.y = r.z = 0;
       r.zero();
     }
     
@@ -917,12 +905,12 @@ namespace gmath
     d.setNumCVs(mCVs.size() - 1);
     d.resizeKnots();
     
-    size_t n = mCVs.size() - 1;
+    long n = getNumCVs() - 1;
     
     float tmp;
     CV q;
     
-    for (size_t i=0; i<n; ++i)
+    for (long i=0; i<n; ++i)
     {
       tmp = mKnots[i+mDegree+1] - mKnots[i+1];
       tmp = (tmp < 0.000001f ? 0.0f : float(mDegree) / tmp);
@@ -935,7 +923,7 @@ namespace gmath
       d.setCV(i, q);
     }
     
-    for (size_t i=0, j=1; j<(mKnots.size() - 1); ++i, ++j)
+    for (long i=0, j=1; j<(getNumKnots() - 1); ++i, ++j)
     {
       d.setKnot(i, mKnots[j]);
     }
