@@ -117,7 +117,7 @@ namespace gmath {
           
           // select pivot
           for (crow=ccol+1; crow<dim; ++crow) {
-            cval = fabs(rmatrix[crow][ccol]);
+            cval = Abs(rmatrix[crow][ccol]);
             if (cval > mval) {
               mval = cval;
               mrow = crow;
@@ -154,13 +154,12 @@ namespace gmath {
         
         j = dim-1;
         
-        if (Abs(rmatrix[j][j]) < EPS) {
-          result[j] = 0;
-        } else {
+        if (Abs(rmatrix[j][j]) >= EPS) {
           result[j] = rmatrix[j][dim];
         }
         
-        while (--j >= 0) {
+        while (j > 0) {
+          --j;
           result[j] = rmatrix[j][dim];
           for (k=dim-1; k>j; --k) {
             result[j] -= rmatrix[j][k] * result[k];
