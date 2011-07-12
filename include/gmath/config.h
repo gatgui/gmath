@@ -52,6 +52,7 @@ USA.
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <cstdarg>
 #include <cassert>
 #undef max

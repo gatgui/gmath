@@ -726,48 +726,48 @@ inline std::ostream& operator<<(std::ostream &os, const gmath::Vector4 &rhs) {
 
 template <unsigned int d>
 inline gmath::Vector<d> operator+(const gmath::Vector<d> &v0, const gmath::Vector<d> &v1) {
-	gmath::Vector<d> result(v0);
-	return result += v1;
+  gmath::Vector<d> result(v0);
+  return result += v1;
 }
 
 template <unsigned int d>
 inline gmath::Vector<d> operator-(const gmath::Vector<d> &v0, const gmath::Vector<d> &v1) {
-	gmath::Vector<d> result(v0);
-	return result -= v1;
+  gmath::Vector<d> result(v0);
+  return result -= v1;
 }
 
 template <unsigned int d>
 inline gmath::Vector<d> operator*(const gmath::Vector<d> &v0, const gmath::Vector<d> &v1) {
-	gmath::Vector<d> result(v0);
-	return result *= v1;
+  gmath::Vector<d> result(v0);
+  return result *= v1;
 }
 
 template <unsigned int d>
 inline gmath::Vector<d> operator*(const gmath::Vector<d> &v, float s) {
-	gmath::Vector<d> result(v);
-	return result *= s;
+  gmath::Vector<d> result(v);
+  return result *= s;
 }
 
 template <unsigned int d>
 inline gmath::Vector<d> operator/(const gmath::Vector<d> &v, float s) {
-	gmath::Vector<d> result(v);
-	return result /= s;
+  gmath::Vector<d> result(v);
+  return result /= s;
 }
 
 template <unsigned int d>
 inline gmath::Vector<d> operator*(float s, const gmath::Vector<d> &v) {
-	gmath::Vector<d> result(v);
-	return result *= s;
+  gmath::Vector<d> result(v);
+  return result *= s;
 }
 
 template <unsigned int d>
 inline std::ostream& operator<<(std::ostream &os, const gmath::Vector<d> &v) {
   os << "(";
-	for (unsigned int i=0; i<(d-1); ++i) {
-		os << v[i] << ", ";
-	}
-	os << v[d-1] << ")";
-	return os;
+  for (unsigned int i=0; i<(d-1); ++i) {
+    os << v[i] << ", ";
+  }
+  os << v[d-1] << ")";
+  return os;
 }
 
 #endif

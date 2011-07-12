@@ -38,9 +38,9 @@ namespace gmath
   public:
     
     typedef Vector<D+1> CV;
-    typedef Vector<D> Point, Vector;
+    typedef Vector<D> Pnt, Vec;
     typedef std::vector<CV> CVArray;
-    typedef std::vector<Point> PointArray;
+    typedef std::vector<Pnt> PntArray;
     typedef std::vector<float> WeightArray;
     typedef std::vector<float> KnotArray;
     
@@ -61,7 +61,7 @@ namespace gmath
     
     void clear();
     
-    bool getBoundingBox(Point &min, Point &max) const;
+    bool getBoundingBox(Pnt &min, Pnt &max) const;
     
     // cvs access
     long getNumCVs() const;
@@ -70,10 +70,10 @@ namespace gmath
     void setCV(long idx, const CV &cv);
     long getCVs(CVArray &cvs) const;
     void setCVs(const CVArray &cvs);
-    Point getPoint(long idx) const;
-    void setPoint(long idx, const Point &p);
-    long getPoints(PointArray &points) const;
-    void setPoints(const PointArray &points);
+    Pnt getPoint(long idx) const;
+    void setPoint(long idx, const Pnt &p);
+    long getPoints(PntArray &points) const;
+    void setPoints(const PntArray &points);
     float getWeight(long idx) const;
     void setWeight(long idx, float w);
     long getWeights(WeightArray &weights) const;
@@ -106,8 +106,8 @@ namespace gmath
     // evaluation
     long computeBasis(float u, float *basis) const;
     bool derivate(NURBS<D> &d) const;
-    bool eval(float u, Point &r) const;
-    bool evalDerivative(float u, Vector &r) const;
+    bool eval(float u, Pnt &r) const;
+    bool evalDerivative(float u, Vec &r) const;
     
     // length operations
     float getLength(float precision=0.001f) const;
@@ -117,8 +117,8 @@ namespace gmath
     float getParamAtLength(float l, float precision=0.001f);
     
     // vector operations
-    bool getTangent(float u, Vector &t, bool normalize=true);
-    bool getNormal(float u, Vector &n, bool normalize=true);
+    bool getTangent(float u, Vec &t, bool normalize=true);
+    bool getNormal(float u, Vec &n, bool normalize=true);
     
     // splitting operations
     bool subdivide(float u, NURBS<D> &before, NURBS<D> &after);
@@ -186,7 +186,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  bool NURBS<D>::getBoundingBox(NURBS<D>::Point &min, NURBS<D>::Point &max) const
+  bool NURBS<D>::getBoundingBox(NURBS<D>::Pnt &min, NURBS<D>::Pnt &max) const
   {
     if (mCVs.size() == 0)
     {
@@ -318,30 +318,30 @@ namespace gmath
   }
 
   template <unsigned int D>
-  typename NURBS<D>::Point NURBS<D>::getPoint(long idx) const
+  typename NURBS<D>::Pnt NURBS<D>::getPoint(long idx) const
   {
     return mCVs[idx];
   }
 
   template <unsigned int D>
-  void NURBS<D>::setPoint(long idx, const typename NURBS<D>::Point &point)
+  void NURBS<D>::setPoint(long idx, const typename NURBS<D>::Pnt &point)
   {
     mCVs[idx] = point;
   }
 
   template <unsigned int D>
-  long NURBS<D>::getPoints(typename NURBS<D>::PointArray &points) const
+  long NURBS<D>::getPoints(typename NURBS<D>::PntArray &points) const
   {
     points.resize(mCVs.size());
     for (size_t i=0; i<mCVs.size(); ++i)
     {
-      points[i] = Point(mCVs[i]);
+      points[i] = Pnt(mCVs[i]);
     }
     return long(points.size());
   }
 
   template <unsigned int D>
-  void NURBS<D>::setPoints(const typename NURBS<D>::PointArray &points)
+  void NURBS<D>::setPoints(const typename NURBS<D>::PntArray &points)
   {
     mDirty = (points.size() != mCVs.size());
     if (mDirty)
@@ -857,7 +857,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  bool NURBS<D>::eval(float u, NURBS<D>::Point &r) const
+  bool NURBS<D>::eval(float u, NURBS<D>::Pnt &r) const
   {
     float *coeffs = (float*) alloca((mDegree+1) * sizeof(float));
     
@@ -932,7 +932,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  bool NURBS<D>::evalDerivative(float u, NURBS<D>::Vector &r) const
+  bool NURBS<D>::evalDerivative(float u, NURBS<D>::Vec &r) const
   {
     NURBS<D> d;
     if (derivate(d))
@@ -1000,7 +1000,7 @@ namespace gmath
     
     long nseg = 1;
     
-    Point Pfrom, Pto;
+    Pnt Pfrom, Pto;
     
     if (!eval(from, Pfrom) || !eval(to, Pto))
     {
@@ -1076,7 +1076,7 @@ namespace gmath
   }
 
   template <unsigned int D>
-  bool NURBS<D>::getTangent(float u, NURBS<D>::Vector &t, bool normalize)
+  bool NURBS<D>::getTangent(float u, NURBS<D>::Vec &t, bool normalize)
   {
     if (!evalDerivative(u, t))
     {
@@ -1090,12 +1090,12 @@ namespace gmath
   }
 
   template <unsigned int D>
-  bool NURBS<D>::getNormal(float u, NURBS<D>::Vector &n, bool normalize)
+  bool NURBS<D>::getNormal(float u, NURBS<D>::Vec &n, bool normalize)
   {
     NURBS<D> d;
     if (derivate(d))
     {
-      Point t;
+      Pnt t;
       
       if (!d.eval(u, t))
       {
