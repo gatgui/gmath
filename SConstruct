@@ -10,7 +10,7 @@ prjs = [
     "srcs"    : glob.glob("src/lib/*.cpp"),
     "defs"    : ["GMATH_EXPORTS"]
   },
-  { "name"    : "tests",
+  { "name"    : "gmath_tests",
     "type"    : "testprograms",
     "incdirs" : ["include"],
     "srcs"    : glob.glob("src/test/*.cpp"),
