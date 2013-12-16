@@ -25,10 +25,47 @@ USA.
 #define __gmath_curve_h_
 
 #include <gmath/config.h>
+#include <gmath/vector.h>
+#include <gmath/polynomial.h>
 #include <sstream>
 
 namespace gmath {
   
+  template <typename T>
+  struct ValueComp {
+    enum {
+      Count = 1
+    };
+    static inline float Get(const T &v, size_t) { return float(v); }
+    static inline void Set(T &v, size_t, float nv) { v = (T)nv; }
+  };
+
+  template <> struct ValueComp<Vector2> {
+    enum {
+      Count = 2
+    };
+    static inline float Get(const Vector2 &v, size_t idx) { return v[idx]; }
+    static inline void Set(Vector2 &v, size_t idx, float nv) { v[idx] = nv; }
+  };
+
+  template <> struct ValueComp<Vector3> {
+    enum {
+      Count = 3
+    };
+    static inline float Get(const Vector3 &v, size_t idx) { return v[idx]; }
+    static inline void Set(Vector3 &v, size_t idx, float nv) { v[idx] = nv; }
+  };
+
+  template <> struct ValueComp<Vector4> {
+    enum {
+      Count = 4
+    };
+    static inline float Get(const Vector4 &v, size_t idx) { return v[idx]; }
+    static inline void Set(Vector4 &v, size_t idx, float nv) { v[idx] = nv; }
+  };
+
+  // ---
+
   class GMATH_API Curve {
     
     public:
@@ -84,7 +121,7 @@ namespace gmath {
   
   template <typename T>
   class TCurve : public Curve {
-    protected:
+    public:
       
       struct Key {
         float t;
@@ -92,11 +129,15 @@ namespace gmath {
         Interpolation interp;
         Tangent ottype;
         T ot;
+        float ow;
         Tangent ittype;
         T it;
+        float iw;
       };
       
       typedef typename std::deque<Key> KeyList;
+      
+    protected:
         
       inline friend bool operator<(const Key &k, float t) {
         return (k.t < t);
@@ -105,10 +146,10 @@ namespace gmath {
       void updateTangents(size_t idx) {
         Key &k = mKeys[idx];
         
-        T sit = T(0); // smooth tangent
-        T sot = T(0); // smooth tangent
-        T lit = T(0); // linear tangent
-        T lot = T(0); // linear tangent
+        T sit = T(0);
+        T sot = T(0);
+        T lit = T(0);
+        T lot = T(0);
         
         if (idx > 0) {
           Key &pk = mKeys[idx-1];
@@ -116,43 +157,42 @@ namespace gmath {
           if (idx < (mKeys.size() - 1)) {
             Key &nk = mKeys[idx+1];
             
-            float dt0 =  k.t - pk.t;
-            float dt1 = nk.t -  k.t;
+            lit = (k.v - pk.v) / (k.t - pk.t);
+            lot = (nk.v - k.v) / (nk.t - k.t);
             
-            lit =  k.v - pk.v;
-            lot = nk.v -  k.v;
+            float dt = nk.t - pk.t;
+            T dv = nk.v - pk.v;
             
-            T st = 0.5f * (nk.v - pk.v);
-            
-            float tmp = 2.0f / (dt0 + dt1);
-            
-            sit = st * dt0 * tmp;
-            sot = st * dt1 * tmp;
+            sit = dv / dt;
+            sot = sit;
           
           } else {
-            T lt = lot = k.v - pk.v;
-            T st = 1.5f * lt - 0.5f * pk.ot;
+            lit = (k.v - pk.v) / (k.t - pk.t);
+            lot = lit;
             
-            sit = sot = st;
-            lit = lot = lt;
+            sit = lit;
+            sot = sit;
           }
         
-        } else if (idx < (mKeys.size() - 1)) {
+        } else if (idx + 1 < mKeys.size()) {
           Key &nk = mKeys[idx+1];
           
-          T lt = nk.v - k.v;
-          T st = 1.5f * lt - 0.5f * nk.it;
+          lot = (nk.v - k.v) / (nk.t - k.t);
+          lit = lot;
           
-          sit = sot = st;
-          lit = lot = lt;
+          sot = lot;
+          sit = sot;
         }
         
         if (k.ittype == T_FLAT) {
           k.it = T(0);
+          k.iw = 1.0f;
         } else if (k.ittype == T_LINEAR) {
           k.it = lit;
+          k.iw = 1.0f;
         } else if (k.ittype == T_SMOOTH) {
           k.it = sit;
+          k.iw = 1.0f;
         } else {
           // T_CUSTOM
           // keep value
@@ -160,10 +200,13 @@ namespace gmath {
         
         if (k.ottype == T_FLAT) {
           k.ot = T(0);
+          k.ow = 1.0f;
         } else if (k.ottype == T_LINEAR) {
           k.ot = lot;
+          k.ow = 1.0f;
         } else if (k.ottype == T_SMOOTH) {
           k.ot = sot;
+          k.ow = 1.0f;
         } else {
           // T_CUSTOM
           // keep value
@@ -364,7 +407,9 @@ namespace gmath {
         mKeys.clear();
       }
       
-      T eval(float t) const {
+      // polies is a polynomial pair for weighted evaluation
+      // if not passed, they will be created on stack at each eval call
+      T eval(float t, bool weighted=false, Polynomial *polies=NULL) const {
         if (numKeys() == 0) {
           return 0.0f;
         } else if (numKeys() == 1) {
@@ -475,7 +520,7 @@ namespace gmath {
         
           const Key &k0 = *it0;
           const Key &k1 = *it1;
-        
+
           float dt = k1.t - k0.t;
           u = (t - k0.t) / dt;
         
@@ -486,17 +531,68 @@ namespace gmath {
             value = k0.v + u * (k1.v - k0.v);
             
           } else {
-            float u2 = u * u;
-            float u3 = u * u2;
-            float h1 =  2 * u3 - 3 * u2 + 1;
-            float h2 = -2 * u3 + 3 * u2;
-            float h3 =      u3 - 2 * u2 + u;
-            float h4 =      u3 -     u2;
-            value = h1 * k0.v + h2 * k1.v + h3 * k0.ot + h4 * k1.it;
+            if (weighted) {
+              Polynomial _polies[2];
+              int nroots = 0;
+              float roots[3];
+
+              T dv = k1.v - k0.v;
+              
+              float tout = dt * k0.ow;
+              float tin = dt * k1.iw;
+
+              T vout = tout * k0.ot;
+              T vin = tin * k1.it;
+
+              if (!polies) {
+                polies = _polies;
+              }
+
+              Polynomial &tpoly = polies[0];
+              Polynomial &vpoly = polies[1];
+
+              tpoly.setDegree(3);
+              vpoly.setDegree(3);
+
+              tpoly[0] = -u * dt; // -((t - prev) / (next - prev)) * (next - prev) = prev - t
+              tpoly[1] = tout;
+              tpoly[2] = 3*dt - 2*tout - tin;
+              tpoly[3] = -2*dt + tout + tin;
+              
+              tpoly.getDegree3Roots(nroots, roots);
+
+              if (nroots >= 1) {
+                for (int i=0; i<ValueComp<T>::Count; ++i) {
+                  vpoly[0] = ValueComp<T>::Get(k0.v, i);
+                  vpoly[1] = ValueComp<T>::Get(vout, i);
+                  vpoly[2] = 3*ValueComp<T>::Get(dv, i) - 2*ValueComp<T>::Get(vout, i) - ValueComp<T>::Get(vin, i);
+                  vpoly[3] = -2*ValueComp<T>::Get(dv, i) + ValueComp<T>::Get(vout, i) + ValueComp<T>::Get(vin, i);
+                  ValueComp<T>::Set(value, i, vpoly.eval(roots[0]));
+                }
+              } else {
+                value = k0.v;
+              }
+
+            } else {
+              float u2 = u * u;
+              float u3 = u * u2;
+              float h1 =  2 * u3 - 3 * u2 + 1;
+              float h2 = -2 * u3 + 3 * u2;
+              float h3 =      u3 - 2 * u2 + u;
+              float h4 =      u3 -     u2;
+              value = h1 * k0.v +
+                      h2 * k1.v +
+                      h3 * dt * k0.ot + //h3 * k0.ot +
+                      h4 * dt * k1.it;  //h4 * k1.it;
+            }
           }
         }
         
         return (value + offset);
+      }
+      
+      const Key& getKey(size_t idx) const {
+        return mKeys[idx];
       }
       
       const T& getValue(size_t idx) const {
@@ -532,6 +628,10 @@ namespace gmath {
           updateTangents(idx-1);
         }
       }
+
+      void setInWeight(size_t idx, float w) {
+        mKeys[idx].iw = w;
+      }
       
       void setOutTangent(size_t idx, Tangent t, const T &val=T(0)) {
         mKeys[idx].ottype = t;
@@ -544,6 +644,10 @@ namespace gmath {
         if (idx+2 == mKeys.size() && mKeys[idx+1].ittype == T_SMOOTH) {
           updateTangents(idx+1);
         }
+      }
+
+      void setOutWeight(size_t idx, float w) {
+        mKeys[idx].ow = w;
       }
       
       void setInterpolation(size_t idx, Interpolation it) {
@@ -577,17 +681,16 @@ namespace gmath {
         os << "pre-infinity = " << sInfinityStr[int(mPreInf)] << ", ";
         os << "post-infinity = " << sInfinityStr[int(mPostInf)] << ", keys = [";
         if (mKeys.size() > 0) {
-          // it and ot are not slopes, need to divide by time interval to get a slope
           os << "(t = " << mKeys[0].t << " -> "
              << mKeys[0].v
-             << ", in: " << mKeys[0].it << " (" << sTangentStr[int(mKeys[0].ittype)] << ")"
-             << ", out: " << mKeys[0].ot << " (" << sTangentStr[int(mKeys[0].ottype)] << ")"
+             << ", in: " << mKeys[0].it << ":" << mKeys[0].iw << " (" << sTangentStr[int(mKeys[0].ittype)] << ")"
+             << ", out: " << mKeys[0].ot << ":" << mKeys[0].ow << " (" << sTangentStr[int(mKeys[0].ottype)] << ")"
              << ", " << sInterpolationStr[int(mKeys[0].interp)] << ")";
           for (size_t i=1; i<mKeys.size(); ++i) {
             os << ", (t = " << mKeys[i].t << " -> "
                << mKeys[i].v
-               << ", in: " << mKeys[i].it << " (" << sTangentStr[int(mKeys[i].ittype)] << ")"
-               << ", out: " << mKeys[i].ot << " (" << sTangentStr[int(mKeys[i].ottype)] << ")"
+               << ", in: " << mKeys[i].it << ":" << mKeys[i].iw << " (" << sTangentStr[int(mKeys[i].ittype)] << ")"
+               << ", out: " << mKeys[i].ot << ":" << mKeys[i].ow << " (" << sTangentStr[int(mKeys[i].ottype)] << ")"
                << ", " << sInterpolationStr[int(mKeys[i].interp)] << ")";
           }
         }

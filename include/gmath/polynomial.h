@@ -61,7 +61,9 @@ namespace gmath {
 			float getRootsBound(void) const;
 			void getRootsOn(float min, float max, int &nroots, float *roots) const;
 			void getAllRoots(int &nroots, float *roots) const;
+			bool getDegree1Roots(int &nroots, float roots[1]) const;
 			bool getDegree2Roots(int &nroots, float roots[2]) const;
+			bool getDegree3Roots(int &nroots, float roots[3]) const;
 
 		protected:
 

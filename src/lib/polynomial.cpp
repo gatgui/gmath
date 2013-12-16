@@ -57,14 +57,18 @@ namespace gmath {
   }
 
   void Polynomial::setDegree(int deg) {
-  	delete[] coeff;
-  	coeff = 0;
-  	if (deg > -1) {
-  		coeff = new float[deg+1];
-  		degree = deg;
-  	} else {
-  		degree = -1;
-  	}
+    if (deg != degree) {
+      if (coeff) {
+  	    delete[] coeff;
+      }
+  	  coeff = 0;
+  	  if (deg > -1) {
+  		  coeff = new float[deg+1];
+  		  degree = deg;
+  	  } else {
+  		  degree = -1;
+  	  }
+    }
   }
 
   float& Polynomial::operator[](int index) {
@@ -384,10 +388,31 @@ namespace gmath {
     getRootsOn(-bound,bound,nroots,roots);
   }
 
+  bool Polynomial::getDegree1Roots(int &nroots, float roots[1]) const {
+    if (degree < 1) {
+      nroots = 0;
+      return false;
+    }
+
+    if (Abs(coeff[1]) < ZERO_TOLERANCE) {
+      roots[0] = 0.0f;
+    
+    } else {
+      roots[0] = -coeff[0] / coeff[1];
+    }
+
+    nroots = 1;
+    return true;
+  }
+
   bool Polynomial::getDegree2Roots(int &nroots, float roots[2]) const {
-    if (degree != 2) {
+    if (degree < 2) {
   		nroots = 0;
       return false;
+    }
+
+    if (Abs(coeff[2]) < ZERO_TOLERANCE) {
+      return getDegree1Roots(nroots, roots);
     }
 
     float discr = coeff[1]*coeff[1] - 4.0f*coeff[2]*coeff[0];
@@ -407,6 +432,84 @@ namespace gmath {
       roots[0] = scalar * (-coeff[1] + discr);
       roots[1] = scalar * (-coeff[1] - discr);
     }
+    return true;
+  }
+
+  bool Polynomial::getDegree3Roots(int &nroots, float roots[3]) const {
+    static float a3rd = 1.0f / 3.0f;
+    static float a27th = 1.0f / 27.0f;
+    static float sqrt3 = Sqrt(3.0f);
+
+    if (degree < 3) {
+      nroots = 0;
+      return false;
+    }
+
+    float p[4] = {coeff[0], coeff[1], coeff[2], coeff[3]};
+
+    if (Abs(p[3]) < ZERO_TOLERANCE) {
+      return getDegree2Roots(nroots, roots);
+    }
+
+    // p[3]*x^3 + p[2]*x^2 + p[1]*x + p[0] -> x^3 + x^2*(p[2]/p[3]) + x*(p[1]/p[3]) + p[0]/p[3]
+    float inv3 = 1.0f / p[3];
+    p[2] *= inv3;
+    p[1] *= inv3;
+    p[0] *= inv3;
+
+    // Convert to the form y^3 + a*y + b using x = y - p[2]/3
+    float off = a3rd * p[2];
+    float A = p[1] - (p[2] * off);
+    float B = p[0] + (a27th * p[2] * (2.0f * p[2] * p[2] - 9.0f * p[1]));
+    float hB = 0.5f * B;
+    float D = hB * hB + a27th * A * A * A;
+
+    if (Abs(D) < ZERO_TOLERANCE) {
+      D = 0.0f;
+    }
+
+    if (D > 0.0f) {
+      D = Sqrt(D);
+      float tmp = -hB + D;
+      roots[0] = (tmp > 0.0f ? Pow(tmp, a3rd) : -Pow(-tmp, a3rd));
+      tmp = -hB - D;
+      roots[0] += (tmp > 0.0f ? Pow(tmp, a3rd) : -Pow(-tmp, a3rd));
+      roots[0] -= off;
+      nroots = 1;
+
+    } else if (D < 0.0f) {
+      float dist = Sqrt(-a3rd * A);
+      float angle = a3rd * Atan2(Sqrt(-D), -hB);
+      float cosa = Cos(angle);
+      float sina = Sin(angle);
+      roots[0] = 2.0f * dist * cosa - off;
+      roots[1] = -dist * (cosa + sqrt3 * sina) - off;
+      roots[2] = -dist * (cosa - sqrt3 * sina) - off;
+      // Sort roots
+      float tmp;
+      if (roots[1] < roots[0]) {
+        tmp = roots[0]; roots[0] = roots[1]; roots[1] = tmp;
+      }
+      if (roots[2] < roots[0]) {
+        tmp = roots[0]; roots[0] = roots[2]; roots[2] = tmp;
+      }
+      if (roots[2] < roots[1]) {
+        tmp = roots[1]; roots[1] = roots[2]; roots[2] = tmp;
+      }
+      nroots = 3;
+
+    } else {
+      float tmp = (hB >= 0.0f ? -Pow(hB, a3rd) : Pow(-hB, a3rd));
+      roots[0] = 2.0f * tmp - off;
+      roots[1] = -tmp - off;
+      roots[2] = roots[1];
+      if (roots[1] < roots[0]) {
+        roots[2] = roots[0];
+        roots[0] = roots[1];
+      }
+      nroots = 2;
+    }
+
     return true;
   }
   
