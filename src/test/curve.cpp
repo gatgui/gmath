@@ -193,6 +193,18 @@ void keyboard(unsigned char key, int, int)
     gWeighted = !gWeighted;
     glutPostRedisplay();
   }
+  else if (key == '+')
+  {
+    gCurve.setOutWeight(2, gCurve.getOutWeight(2)+1.0f);
+    glutPostRedisplay();
+  }
+  else if (key == '-')
+  {
+    float w = gCurve.getOutWeight(2)-1.0f;
+    if (w < 1.0f) w = 1.0f;
+    gCurve.setOutWeight(2, w);
+    glutPostRedisplay();
+  }
   else if (key == 'p')
   {
     std::cout << gCurve << std::endl;
@@ -218,9 +230,14 @@ int main(int argc, char **argv)
   gCurve.insert(4.3f, 1.1f);
   gCurve.insert(5.0f, 0.0f);
   
-  gCurve.setOutWeight(ki, 5.0f);
+  gCurve.setOutWeight(ki, 2.0f);
   
   std::cout << gCurve << std::endl;
+  std::cout << "---" << std::endl;
+  std::cout << "t(2) = " << gCurve.eval(2.0f) << std::endl;
+  std::cout << "=> with weights:" << std::endl;
+  std::cout << "t(2) = " << gCurve.eval(2.0f, true, gPolies) << std::endl;
+
   
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA|GLUT_DEPTH|GLUT_DOUBLE);

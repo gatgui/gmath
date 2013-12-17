@@ -558,17 +558,40 @@ namespace gmath {
               tpoly[1] = tout;
               tpoly[2] = 3*dt - 2*tout - tin;
               tpoly[3] = -2*dt + tout + tin;
-              
-              tpoly.getDegree3Roots(nroots, roots);
 
-              if (nroots >= 1) {
-                for (int i=0; i<ValueComp<T>::Count; ++i) {
-                  vpoly[0] = ValueComp<T>::Get(k0.v, i);
-                  vpoly[1] = ValueComp<T>::Get(vout, i);
-                  vpoly[2] = 3*ValueComp<T>::Get(dv, i) - 2*ValueComp<T>::Get(vout, i) - ValueComp<T>::Get(vin, i);
-                  vpoly[3] = -2*ValueComp<T>::Get(dv, i) + ValueComp<T>::Get(vout, i) + ValueComp<T>::Get(vin, i);
-                  ValueComp<T>::Set(value, i, vpoly.eval(roots[0]));
+              int iroot = -1;
+              // Use the first root in [0,1] range
+              // Note: - roots are already sorted by getDegree3Roots
+              //       - if more than one root, we may want to smooth out the result
+              if (tpoly.getDegree3Roots(nroots, roots)) {
+                if (nroots > 1) {
+                  std::cout << "t(" << t << "): More than 1 root: " << std::endl;
+                  for (int i=0; i<nroots; ++i) {
+                    std::cout << "  " << roots[i] << std::endl;
+                  }
                 }
+                for (int i=0; i<nroots; ++i) {
+                  if (roots[i] < 0.0f || roots[i] > 1.0f) {
+                    continue;
+                  }
+                  iroot = i;
+                  break;
+                }
+              }
+
+              if (iroot >= 0) {
+                float idv, ivout, ivin;
+                for (int i=0; i<ValueComp<T>::Count; ++i) {
+                  idv = ValueComp<T>::Get(dv, i);
+                  ivout = ValueComp<T>::Get(vout, i);
+                  ivin = ValueComp<T>::Get(vin, i);
+                  vpoly[0] = ValueComp<T>::Get(k0.v, i);
+                  vpoly[1] = ivout;
+                  vpoly[2] = 3*idv - 2*ivout - ivin;
+                  vpoly[3] = -2*idv + ivout + ivin;
+                  ValueComp<T>::Set(value, i, vpoly.eval(roots[iroot]));
+                }
+
               } else {
                 value = k0.v;
               }
@@ -582,8 +605,8 @@ namespace gmath {
               float h4 =      u3 -     u2;
               value = h1 * k0.v +
                       h2 * k1.v +
-                      h3 * dt * k0.ot + //h3 * k0.ot +
-                      h4 * dt * k1.it;  //h4 * k1.it;
+                      h3 * dt * k0.ot +
+                      h4 * dt * k1.it;
             }
           }
         }
@@ -605,6 +628,14 @@ namespace gmath {
       
       const T& getOutTangent(size_t idx) const {
         return mKeys[idx].ot;
+      }
+
+      float getOutWeight(size_t idx) const {
+        return mKeys[idx].ow;
+      }
+
+      float getInWeight(size_t idx) const {
+        return mKeys[idx].iw;
       }
       
       Interpolation getInterpolation(size_t idx) const {
@@ -649,7 +680,7 @@ namespace gmath {
       void setOutWeight(size_t idx, float w) {
         mKeys[idx].ow = w;
       }
-      
+       
       void setInterpolation(size_t idx, Interpolation it) {
         mKeys[idx].interp = it;
       }

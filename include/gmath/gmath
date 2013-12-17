@@ -44,7 +44,8 @@ USA.
 #include <gmath/convexhull3D.h>
 #include <gmath/nurbs.h>
 #include <gmath/complex.h>
-//#include <gmath/fft.h>
+#include <gmath/curve.h>
+#include <gmath/fft.h>
 
 #endif
 
