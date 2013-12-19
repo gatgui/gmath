@@ -32,7 +32,6 @@ USA.
 // ---
 
 TCurve<float> gCurve;
-Polynomial gPolies[2];
 double gMinX = -1.0;
 double gMaxX = 6.0;
 double gMinY = -5.0;
@@ -70,7 +69,7 @@ void display()
   t = tstart;
   while (t <= tend)
   {
-    v = gCurve.eval(t, gCurve.isWeighted() ? gPolies : 0);
+    v = gCurve.eval(t);
     glVertex2d(t, v);
     t += gSampleStep;
   }
@@ -318,10 +317,6 @@ void initGL()
 
 int main(int argc, char **argv)
 {
-  float p0[4], p1[4];
-  gPolies[0].setCoeffs(3, p0);
-  gPolies[1].setCoeffs(3, p1);
-  
   std::cout << "Set curve weighted" << std::endl;
   gCurve.setWeighted(true);
 

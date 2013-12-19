@@ -640,7 +640,7 @@ namespace gmath {
       
       // polies is a polynomial pair for weighted evaluation
       // if not passed, they will be created on stack at each eval call
-      T eval(float t, Polynomial *polies=NULL) const {
+      T eval(float t) const {
         if (numKeys() == 0) {
           return 0.0f;
         } else if (numKeys() == 1) {
@@ -763,10 +763,8 @@ namespace gmath {
             
           } else {
             if (mWeighted) {
-              Polynomial _polies[2];
-              float p0[4], p1[4];
+              float p0[4], p1[4], roots[3];
               int nroots = 0;
-              float roots[3];
 
               T dv = k1.v - k0.v;
               
@@ -775,18 +773,9 @@ namespace gmath {
 
               T vout = tout * k0.ot;
               T vin = tin * k1.it;
-
-              if (!polies) {
-                polies = _polies;
-                polies[0].setCoeffs(3, p0);
-                polies[1].setCoeffs(3, p1);
-              } else {
-                polies[0].setDegree(3);
-                polies[1].setDegree(3);
-              }
               
-              Polynomial &tpoly = polies[0];
-              Polynomial &vpoly = polies[1];
+              Polynomial tpoly(3, p0);
+              Polynomial vpoly(3, p1);
               
               tpoly[0] = -u * dt;
               tpoly[1] = tout;
