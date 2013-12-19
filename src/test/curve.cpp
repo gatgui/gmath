@@ -273,6 +273,36 @@ void keyboard(unsigned char key, int, int)
     }
     std::cout << "Weight increment: " << gWeightIncr << std::endl;
   }
+  else if (key == 'x')
+  {
+    if ((gMaxX - gMinX) > 2.0f)
+    {
+      gMinX += 1.0f;
+      gMaxX -= 1.0f;
+      reshape(gResolX, gResolY);
+    }
+  }
+  else if (key == 'X')
+  {
+    gMinX -= 1.0f;
+    gMaxX += 1.0f;
+    reshape(gResolX, gResolY);
+  }
+  else if (key == 'y')
+  {
+    if ((gMaxY - gMinY) > 2.0f)
+    {
+      gMinY += 1.0f;
+      gMaxY -= 1.0f;
+      reshape(gResolX, gResolY);
+    }
+  }
+  else if (key == 'Y')
+  {
+    gMinY -= 1.0f;
+    gMaxY += 1.0f;
+    reshape(gResolX, gResolY);
+  }
   else
   {
     std::cout << "Key " << int(key) << " pressed" << std::endl;

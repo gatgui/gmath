@@ -793,7 +793,17 @@ namespace gmath {
               tpoly[2] = 3*dt - 2*tout - tin;
               tpoly[3] = -2*dt + tout + tin;
               
-              if (tpoly.getDegree3Roots(nroots, roots) && nroots > 0) {
+              int iroot = -1;
+              if (tpoly.getDegree3Roots(nroots, roots)) {
+                for (int r=0; r<nroots; ++r) {
+                  if (roots[r] >= 0.0f && roots[r] <= 1.0f) {
+                    iroot = r;
+                    break;
+                  }
+                }
+              }
+              
+              if (iroot != -1) {
                 float idv, ivout, ivin;
                 for (int i=0; i<ValueComp<T>::Count; ++i) {
                   idv = ValueComp<T>::Get(dv, i);
@@ -803,7 +813,7 @@ namespace gmath {
                   vpoly[1] = ivout;
                   vpoly[2] = 3*idv - 2*ivout - ivin;
                   vpoly[3] = -2*idv + ivout + ivin;
-                  ValueComp<T>::Set(value, i, vpoly.eval(roots[0]));
+                  ValueComp<T>::Set(value, i, vpoly.eval(roots[iroot]));
                 }
               } else {
                 value = (u > 0.5f ? k1.v : k0.v);
@@ -890,7 +900,7 @@ namespace gmath {
 
       void setInWeight(size_t idx, float w) {
         if (mWeighted) {
-          mKeys[idx].iw = (w <= 0.0f ? mWeightEps : (w > mKeys[idx].miw ? mKeys[idx].miw : w));
+          mKeys[idx].iw = (w < 0.0f ? 0.0f : (w > mKeys[idx].miw ? mKeys[idx].miw : w));
           if (idx > 0) {
             updateMaxOutWeight(idx-1);
           }
@@ -912,7 +922,7 @@ namespace gmath {
 
       void setOutWeight(size_t idx, float w) {
         if (mWeighted) {
-          mKeys[idx].ow = (w <= 0.0f ? mWeightEps : (w > mKeys[idx].mow ? mKeys[idx].mow : w));
+          mKeys[idx].ow = (w < 0.0f ? 0.0f : (w > mKeys[idx].mow ? mKeys[idx].mow : w));
           if (idx+1 < numKeys()) {
             updateMaxInWeight(idx+1);
           }
