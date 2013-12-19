@@ -29,46 +29,72 @@ namespace gmath {
   float Polynomial::ZERO_TOLERANCE = 0.000001f;
 
   Polynomial::Polynomial(int deg)
-  	: degree(-1), coeff(0) {
+    : degree(-1), coeff(0), owns(true) {
     if (deg >= 0) {
       degree = deg;
       coeff = new float[deg+1];
     }
   }
+  
+  Polynomial::Polynomial(int deg, float *fcoeffs)
+    : degree(deg), coeff(fcoeffs), owns(false) {
+  }
 
   Polynomial::Polynomial(const Polynomial &rhs)
-    : degree(rhs.degree), coeff(0) {
-    if (degree >= 0) {
-      coeff = new float[degree+1];
-      for (int i = 0; i <= degree; i++) {
-        coeff[i] = rhs.coeff[i];
+    : degree(rhs.degree), coeff(0), owns(true) {
+    if (rhs.owns) {
+      if (degree >= 0) {
+        coeff = new float[degree+1];
+        for (int i = 0; i <= degree; i++) {
+          coeff[i] = rhs.coeff[i];
+        }
+      } else {
+        coeff = 0;
       }
     } else {
-      coeff = 0;
+      owns = false;
+      coeff = rhs.coeff;
     }
   }
 
   Polynomial::~Polynomial() {
-    delete[] coeff;
+    if (owns && coeff) {
+      delete[] coeff;
+    }
   }
 
   int Polynomial::getDegree(void) const {
     return degree;
   }
 
-  void Polynomial::setDegree(int deg) {
+  bool Polynomial::setDegree(int deg) {
     if (deg != degree) {
-      if (coeff) {
-  	    delete[] coeff;
+      if (!owns) {
+        return false;
       }
-  	  coeff = 0;
-  	  if (deg > -1) {
-  		  coeff = new float[deg+1];
-  		  degree = deg;
-  	  } else {
-  		  degree = -1;
-  	  }
+      if (coeff) {
+        delete[] coeff;
+      }
+      coeff = 0;
+      if (deg > -1) {
+        coeff = new float[deg+1];
+        degree = deg;
+      } else {
+        degree = -1;
+      }
     }
+    return true;
+  }
+  
+  void Polynomial::setCoeffs(int deg, float *fcoeffs) {
+    if (owns) {
+      if (coeff) {
+        delete[] coeff;
+      }
+    }
+    coeff = fcoeffs;
+    degree = deg;
+    owns = false;
   }
 
   float& Polynomial::operator[](int index) {
@@ -92,6 +118,22 @@ namespace gmath {
     }
     return res;
   }
+  
+  bool Polynomial::getDerivative(Polynomial &deriv) const {
+    if (degree > 0) {
+      if (!deriv.setDegree(degree-1)) {
+        return false;
+      }
+      
+      for (int i0 = 0, i1 = 1; i0 < degree; i0++, i1++) {
+        deriv[i0] = i1 * coeff[i1];
+      }
+      return true;
+      
+    } else {
+      return false;
+    }
+  }
 
   Polynomial Polynomial::getDerivative(void) const {
     if (degree > 0) {
@@ -104,6 +146,17 @@ namespace gmath {
     } else {
       return Polynomial(-1);
     }
+  }
+  
+  bool Polynomial::getInversion(Polynomial &inv) const {
+    if (!inv.setDegree(degree)) {
+      return false;
+    }
+
+    for (int i = 0; i <= degree; i++) {
+      inv[i] = coeff[degree-i];
+    }
+    return true;
   }
 
   Polynomial Polynomial::getInversion(void) const {
@@ -182,7 +235,14 @@ namespace gmath {
     }
     return prod;
   }
-
+  
+  Polynomial& Polynomial::operator*=(float scalar) {
+    for (int i = 0; i <= degree; i++) {
+      coeff[i] *= scalar;
+    }
+    return *this;
+  }
+  
   Polynomial Polynomial::operator*(float scalar) const {
     assert(degree >= 0);
 
@@ -207,19 +267,26 @@ namespace gmath {
 
   Polynomial& Polynomial::operator=(const Polynomial &rhs) {
     if (this != &rhs) {
-      if (degree >= 0) {
+      if (owns && coeff) {
         delete[] coeff;
       }
-
+      
       degree = rhs.degree;
-        
-  		if (degree >= 0) {
-        coeff = new float[degree+1];
-        for (int i = 0; i <= degree; i++) {
-          coeff[i] = rhs.coeff[i];
+      
+      if (rhs.owns) {
+        if (degree >= 0) {
+          coeff = new float[degree+1];
+          for (int i = 0; i <= degree; i++) {
+            coeff[i] = rhs.coeff[i];
+          }
+        } else {
+          coeff = 0;
         }
+        owns = true;
+        
       } else {
-        coeff = 0;
+        coeff = rhs.coeff;
+        owns = false;
       }
     }
     return *this;
@@ -305,9 +372,13 @@ namespace gmath {
       return;
     }
 
-    Polynomial deriv = getDerivative();
+    Polynomial deriv;
+    if (!getDerivative(deriv)) {
+      nroots = 0;
+      return;
+    }
 
-    deriv.getRootsOn(min,max,nroots,roots);
+    deriv.getRootsOn(min, max, nroots, roots);
 
     tmpRoots = new float[nroots+1];
 
@@ -318,20 +389,20 @@ namespace gmath {
       //On those interval, function is not necessarily linear
       //some problem arise with infinite numbers and float limitation
 
-      if (newton(min,roots[0],root)) {
+      if (newton(min, roots[0], root)) {
         tmpRoots[nTmpRoots++] = root;
       }
       for (i = 0; i < nroots-1; i++) {
-        if (newton(roots[i],roots[i+1],root)) {
+        if (newton(roots[i], roots[i+1], root)) {
           tmpRoots[nTmpRoots++] = root;
         }
       }
-      if (newton(roots[nroots-1],max,root)) {
+      if (newton(roots[nroots-1], max, root)) {
         tmpRoots[nTmpRoots++] = root;
       }
     } else {
       //Polynomial is monotone, at most one root
-      if (newton(min,max,root)) {
+      if (newton(min, max, root)) {
         tmpRoots[nTmpRoots++] = root;
       }
     }
@@ -385,7 +456,7 @@ namespace gmath {
 
   void Polynomial::getAllRoots(int &nroots, float *roots) const {
     float bound = getRootsBound();
-    getRootsOn(-bound,bound,nroots,roots);
+    getRootsOn(-bound, bound, nroots, roots);
   }
 
   bool Polynomial::getDegree1Roots(int &nroots, float roots[1]) const {
@@ -405,9 +476,58 @@ namespace gmath {
     return true;
   }
 
+  bool Polynomial::getDegree2Roots(int &nroots, Complex<float> roots[2]) const {
+    if (degree < 2) {
+      nroots = 0;
+      return false;
+    }
+
+    if (Abs(coeff[2]) < ZERO_TOLERANCE) {
+      float roots1[1];
+      if (!getDegree1Roots(nroots, roots1)) {
+        return false;
+      }
+      if (nroots == 1) {
+        roots[0].re = roots1[0];
+        roots[0].im = 0.0f;
+      }
+      return true;
+    }
+
+    float discr = coeff[1]*coeff[1] - 4.0f*coeff[2]*coeff[0];
+
+    if (discr < -ZERO_TOLERANCE) {
+      // complex roots
+      discr = Sqrt(-discr);
+      float scalar = 0.5f * coeff[2]; 
+      roots[0].re = -coeff[1] * scalar;
+      roots[0].im = discr * scalar;
+      roots[1].re = roots[0].re;
+      roots[1].im = -roots[0].im;
+      nroots = 2;
+
+    } else {
+      if (discr <= ZERO_TOLERANCE) {
+        discr = 0.0f;
+        nroots = 1;
+      } else {
+        nroots = 2;
+      }
+
+      discr = Sqrt(discr);
+      float scalar = 0.5f / coeff[2];
+      roots[0].re = scalar * (-coeff[1] + discr);
+      roots[0].im = 0.0f;
+      roots[1].re = scalar * (-coeff[1] - discr);
+      roots[1].im = 0.0f;
+    }
+
+    return true;
+  }
+
   bool Polynomial::getDegree2Roots(int &nroots, float roots[2]) const {
     if (degree < 2) {
-  		nroots = 0;
+      nroots = 0;
       return false;
     }
 
@@ -417,7 +537,8 @@ namespace gmath {
 
     float discr = coeff[1]*coeff[1] - 4.0f*coeff[2]*coeff[0];
 
-    if (discr < 0.0f) {
+    if (discr < -ZERO_TOLERANCE) {
+      // complex roots
       nroots = 0;
     } else {
       if (discr <= ZERO_TOLERANCE) {
@@ -515,6 +636,18 @@ namespace gmath {
   
 }
 
+std::ostream& operator<<(std::ostream &os, const gmath::Polynomial &p) {
+  if (p.getDegree() >= 0) {
+    os << "p(x) = ";
+    for (int i=p.getDegree(); i>0; --i) {
+      os << p[i] << "*x^" << i << " + ";
+    }
+    os << p[0];
+  } else {
+    os << "p(x) undefined" << std::endl;
+  }
+  return os;
+}
 
 gmath::Polynomial operator*(float scalar, const gmath::Polynomial &poly) {
   gmath::Polynomial prod(poly.getDegree());

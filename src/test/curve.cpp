@@ -32,7 +32,6 @@ USA.
 // ---
 
 TCurve<float> gCurve;
-bool gWeighted = false;
 Polynomial gPolies[2];
 double gMinX = -1.0;
 double gMaxX = 6.0;
@@ -41,6 +40,9 @@ double gMaxY = 5.0;
 double gSampleStep = 0.01;
 int gResolX = 512;
 int gResolY = 512;
+float gWeightIncr = 0.1f;
+size_t gCurKey = 0;
+bool gCurOut = true;
 
 void display()
 {
@@ -68,7 +70,7 @@ void display()
   t = tstart;
   while (t <= tend)
   {
-    v = gCurve.eval(t, gWeighted, gWeighted ? gPolies : 0);
+    v = gCurve.eval(t, gCurve.isWeighted() ? gPolies : 0);
     glVertex2d(t, v);
     t += gSampleStep;
   }
@@ -103,7 +105,7 @@ void display()
     indt *= 0.3f;
     outdt *= 0.3f;
     
-    if (gWeighted)
+    if (gCurve.isWeighted())
     {
       t = k.t - indt * k.iw;
       v = k.v - indt * k.iw * k.it;
@@ -190,24 +192,87 @@ void keyboard(unsigned char key, int, int)
   }
   else if (key == 'w')
   {
-    gWeighted = !gWeighted;
+    gCurve.setWeighted(!gCurve.isWeighted());
     glutPostRedisplay();
   }
   else if (key == '+')
   {
-    gCurve.setOutWeight(2, gCurve.getOutWeight(2)+1.0f);
+    if (gCurOut) {
+      gCurve.setOutWeight(gCurKey, gCurve.getOutWeight(gCurKey) + gWeightIncr);
+      std::cout << "[" << gCurKey << "] Out weight = " << gCurve.getOutWeight(gCurKey) << std::endl;
+    } else {
+      gCurve.setInWeight(gCurKey, gCurve.getInWeight(gCurKey) + gWeightIncr);
+      std::cout << "[" << gCurKey << "] In weight = " << gCurve.getInWeight(gCurKey) << std::endl;
+    }
     glutPostRedisplay();
   }
   else if (key == '-')
   {
-    float w = gCurve.getOutWeight(2)-1.0f;
-    if (w < 1.0f) w = 1.0f;
-    gCurve.setOutWeight(2, w);
+    if (gCurOut) {
+      gCurve.setOutWeight(gCurKey, gCurve.getOutWeight(gCurKey) - gWeightIncr);
+      std::cout << "[" << gCurKey << "] Out Weight = " << gCurve.getOutWeight(gCurKey) << std::endl;
+    } else {
+      gCurve.setInWeight(gCurKey, gCurve.getInWeight(gCurKey) - gWeightIncr);
+      std::cout << "[" << gCurKey << "] In Weight = " << gCurve.getInWeight(gCurKey) << std::endl;
+    }
     glutPostRedisplay();
+  }
+  else if (key == 'n')
+  {
+    if (gCurOut)
+    {
+      if (gCurKey+1 < gCurve.numKeys())
+      {
+        gCurKey += 1;
+        gCurOut = false;
+      }
+    }
+    else
+    {
+      if (gCurKey+1 < gCurve.numKeys())
+      {
+        gCurOut = true;
+      }
+    }
+    std::cout << "Weight target: Key " << gCurKey << (gCurOut ? " out weight" : " in weight") << std::endl;
   }
   else if (key == 'p')
   {
-    std::cout << gCurve << std::endl;
+    //std::cout << gCurve << std::endl;
+    if (gCurOut)
+    {
+      if (gCurKey > 0)
+      {
+        gCurOut = false;
+      }
+    }
+    else
+    {
+      if (gCurKey > 0)
+      {
+        gCurKey -= 1;
+        gCurOut = true;
+      }
+    }
+    std::cout << "Weight target: Key " << gCurKey << (gCurOut ? " out weight" : " in weight") << std::endl;
+  }
+  else if (key == 'I')
+  {
+    gWeightIncr *= 10.0f;
+    std::cout << "Weight increment: " << gWeightIncr << std::endl;
+  }
+  else if (key == 'i')
+  {
+    gWeightIncr *= 0.1f;
+    if (gWeightIncr < 0.001f)
+    {
+      gWeightIncr = 0.001f;
+    }
+    std::cout << "Weight increment: " << gWeightIncr << std::endl;
+  }
+  else
+  {
+    std::cout << "Key " << int(key) << " pressed" << std::endl;
   }
 }
 
@@ -220,24 +285,31 @@ void initGL()
 
 int main(int argc, char **argv)
 {
-  size_t ki = 0;
-  
+  std::cout << "Set curve weighted" << std::endl;
+  gCurve.setWeighted(true);
+
+  std::cout << "Insert key at t = 0.0" << std::endl;
   gCurve.insert(0.0f, 0.0f);
+  std::cout << "Insert key at t = 0.2" << std::endl;
   gCurve.insert(0.2f, 2.0f);
-  ki = gCurve.insert(0.9f, -3.0f);
+  std::cout << "Insert key at t = 0.9" << std::endl;
+  gCurKey = gCurve.insert(0.9f, -3.0f);
+  std::cout << "Insert key at t = 2.5" << std::endl;
   gCurve.insert(2.5f, 4.0f);
+  std::cout << "Insert key at t = 3.6" << std::endl;
   gCurve.insert(3.6f, 2.9f);
+  std::cout << "Insert key at t = 4.3" << std::endl;
   gCurve.insert(4.3f, 1.1f);
+  std::cout << "Insert key at t = 5.0" << std::endl;
   gCurve.insert(5.0f, 0.0f);
   
-  gCurve.setOutWeight(ki, 2.0f);
+  //gCurve.updateMaxWeights(ki);
+  //gCurve.setOutWeight(ki, 2.0f);
+  //std::cout << "Set weight of " << ki << "th key" << std::endl;
+  //gCurve.setOutWeight(ki, 2.0f);
+  // Max weight is somewhere between 3.7 and 3.8 (3.7 is fine, 3.8 is clamping)
   
   std::cout << gCurve << std::endl;
-  std::cout << "---" << std::endl;
-  std::cout << "t(2) = " << gCurve.eval(2.0f) << std::endl;
-  std::cout << "=> with weights:" << std::endl;
-  std::cout << "t(2) = " << gCurve.eval(2.0f, true, gPolies) << std::endl;
-
   
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA|GLUT_DEPTH|GLUT_DOUBLE);

@@ -130,9 +130,11 @@ namespace gmath {
         Tangent ottype;
         T ot;
         float ow;
+        float mow; // Max output weight
         Tangent ittype;
         T it;
         float iw;
+        float miw; // Max input weight
       };
       
       typedef typename std::deque<Key> KeyList;
@@ -183,15 +185,20 @@ namespace gmath {
           sot = lot;
           sit = sot;
         }
+
+        bool updw = false;
         
         if (k.ittype == T_FLAT) {
           k.it = T(0);
+          updw = mWeighted && (updw || (Abs(1.0f - k.iw) > mWeightEps));
           k.iw = 1.0f;
         } else if (k.ittype == T_LINEAR) {
           k.it = lit;
+          updw = mWeighted && (updw || (Abs(1.0f - k.iw) > mWeightEps));
           k.iw = 1.0f;
         } else if (k.ittype == T_SMOOTH) {
           k.it = sit;
+          updw = mWeighted && (updw || (Abs(1.0f - k.iw) > mWeightEps));
           k.iw = 1.0f;
         } else {
           // T_CUSTOM
@@ -200,22 +207,225 @@ namespace gmath {
         
         if (k.ottype == T_FLAT) {
           k.ot = T(0);
+          updw = mWeighted && (updw || (Abs(1.0f - k.ow) > mWeightEps));
           k.ow = 1.0f;
         } else if (k.ottype == T_LINEAR) {
           k.ot = lot;
+          updw = mWeighted && (updw || (Abs(1.0f - k.ow) > mWeightEps));
           k.ow = 1.0f;
         } else if (k.ottype == T_SMOOTH) {
           k.ot = sot;
+          updw = mWeighted && (updw || (Abs(1.0f - k.ow) > mWeightEps));
           k.ow = 1.0f;
         } else {
           // T_CUSTOM
           // keep value
         }
+
+        if (updw) {
+          updateMaxWeights(idx);
+        }
+      }
+      
+      void updateMaxInWeight(size_t idx) {
+        if (idx > 0) {
+          Key &k0 = mKeys[idx-1];
+          Key &k1 = mKeys[idx];
+          
+          float dt = k1.t - k0.t;
+          float tout = dt * k0.ow;
+          //float tout = dt;
+          
+          float t, w, tin, p0[4], p1[3], p2[2];
+          
+          Polynomial tpoly(3, p0);
+          Polynomial tderiv(2, p1);
+          Polynomial tderiv2(1, p2);
+
+          float roots[4];
+          Complex<float> croots[2]; // use complex roots because we want to consider undulation points to
+          int nroots = 0;
+          int iter = 0;
+          
+          float wlow = 1.0f;
+          bool freeHigh = true;
+          float whigh = 5.0f;
+          
+          while (whigh > wlow && Abs(whigh - wlow) > mWeightEps) {
+
+            ++iter;
+            
+            w = 0.5f * (wlow + whigh);
+            tin = dt * w;
+            
+            tpoly[0] = k0.t;
+            tpoly[1] = tout;
+            tpoly[2] = 3*dt - 2*tout - tin;
+            tpoly[3] = -2*dt + tout + tin;
+            
+            bool willClamp = false;
+
+            if (tpoly.getDerivative(tderiv)) {
+              
+              if (tderiv.getDegree2Roots(nroots, croots) && nroots > 0) {
+
+                for (int i=0; i<nroots; ++i) {
+
+                  if (Abs(croots[i].im) > 0.000001f) {
+                    // Complex root: undulation point
+                    // Find time of undulation
+
+                    tderiv.getDerivative(tderiv2);
+                    
+                    if (tderiv2.getDegree1Roots(nroots, roots) && nroots > 0) {
+                      
+                      tpoly[0] = k0.t - tpoly(roots[0]);
+
+                      if (tpoly.getDegree3Roots(nroots, roots) && nroots > 1) {
+                        willClamp = true;
+                        break;
+                      }
+                    }
+
+                  } else {
+                    t = tpoly.eval(croots[i].re);
+                    if (t >= k0.t && t <= k1.t) {
+                      willClamp = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            
+            if (willClamp) {
+              whigh = w;
+              freeHigh = false;
+
+            } else {
+              wlow = w;
+              if (freeHigh) {
+                whigh *= 2.0f;
+              }
+            }
+          }
+
+          mKeys[idx].miw = wlow;
+          
+#ifdef _DEBUG
+          std::cout << "[" << idx << "] Max in weight[" << idx << "] = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
+#endif
+        
+        } else {
+          mKeys[idx].miw = std::numeric_limits<float>::max();
+        }
+      }
+      
+      void updateMaxOutWeight(size_t idx) {
+        if (idx+1 < numKeys()) {
+          Key &k0 = mKeys[idx];
+          Key &k1 = mKeys[idx+1];
+          
+          float dt = k1.t - k0.t;
+          float tin = dt * k1.iw;
+          //float tin = dt;
+          
+          float t, w, tout, p0[4], p1[3], p2[2];
+          
+          Polynomial tpoly(3, p0);
+          Polynomial tderiv(2, p1);
+          Polynomial tderiv2(1, p2);
+
+          float roots[4];
+          Complex<float> croots[2]; // use complex roots because we want to consider undulation points to
+          int nroots = 0;
+          int iter = 0;
+          
+          float wlow = 1.0f;
+          bool freeHigh = true;
+          float whigh = 5.0f;
+          
+          while (whigh > wlow && Abs(whigh - wlow) > mWeightEps) {
+
+            ++iter;
+            
+            w = 0.5f * (wlow + whigh);
+            tout = dt * w;
+            
+            tpoly[0] = k0.t;
+            tpoly[1] = tout;
+            tpoly[2] = 3*dt - 2*tout - tin;
+            tpoly[3] = -2*dt + tout + tin;
+            
+            bool willClamp = false;
+
+            if (tpoly.getDerivative(tderiv)) {
+              
+              if (tderiv.getDegree2Roots(nroots, croots) && nroots > 0) {
+
+                for (int i=0; i<nroots; ++i) {
+
+                  if (Abs(croots[i].im) > 0.000001f) {
+                    // Complex root: undulation point
+                    // Find time of undulation
+
+                    tderiv.getDerivative(tderiv2);
+                    
+                    if (tderiv2.getDegree1Roots(nroots, roots) && nroots > 0) {
+                      
+                      tpoly[0] = k0.t - tpoly(roots[0]);
+
+                      if (tpoly.getDegree3Roots(nroots, roots) && nroots > 1) {
+                        willClamp = true;
+                        break;
+                      }
+                    }
+
+                  } else {
+                    t = tpoly.eval(croots[i].re);
+                    if (t >= k0.t && t <= k1.t) {
+                      willClamp = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            
+            if (willClamp) {
+              whigh = w;
+              freeHigh = false;
+
+            } else {
+              wlow = w;
+              if (freeHigh) {
+                whigh *= 2.0f;
+              }
+            }
+          }
+
+          mKeys[idx].mow = wlow;
+          
+#ifdef _DEBUG
+          std::cout << "[" << idx << "] Max out weight[" << idx << "] = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
+#endif
+        
+        } else {
+          mKeys[idx].mow = std::numeric_limits<float>::max();
+        }
+      }
+
+      void updateMaxWeights(size_t idx) {
+        updateMaxInWeight(idx);
+        updateMaxOutWeight(idx);
       }
       
       void update(size_t idx) {
         if (idx > 0) {
           updateTangents(idx-1);
+          if (mWeighted) {
+            updateMaxOutWeight(idx-1);
+          }
           // if first key output tangent is set to smooth, it depends on the second key input tangent
           // second key input tangent may have been re-computed above if it is not set to T_CUSTOM
           if (idx == 2 && mKeys[idx-1].ittype != T_CUSTOM && mKeys[idx-2].ottype == T_SMOOTH) {
@@ -227,6 +437,9 @@ namespace gmath {
         
         if (idx+1 < mKeys.size()) {
           updateTangents(idx+1);
+          if (mWeighted) {
+            updateMaxInWeight(idx+1);
+          }
           // if last key input tangent is set to smooth, it depends on the second to last key output tangent
           // second to last key output tangent may have been re-computed above if it is not set to T_CUSTOM
           if (idx+3 == mKeys.size() && mKeys[idx+1].ottype != T_CUSTOM && mKeys[idx+2].ittype == T_SMOOTH) {
@@ -283,11 +496,16 @@ namespace gmath {
       
     public:
       
-      TCurve() {
+      
+      
+    public:
+      
+      TCurve()
+        : Curve(), mWeighted(false), mWeightEps(0.001f) {
       }
       
       TCurve(const TCurve<T> &rhs)
-        : Curve(rhs), mKeys(rhs.mKeys) {
+        : Curve(rhs), mKeys(rhs.mKeys), mWeighted(rhs.mWeighted), mWeightEps(rhs.mWeightEps) {
       }
       
       virtual ~TCurve() {
@@ -298,6 +516,8 @@ namespace gmath {
         if (this != &rhs) {
           Curve::operator=(rhs);
           mKeys = rhs.mKeys;
+          mWeighted = rhs.mWeighted;
+          mWeightEps = rhs.mWeightEps;
         }
         return *this;
       }
@@ -342,6 +562,10 @@ namespace gmath {
           nk.interp = IT_SPLINE;
           nk.ittype = T_SMOOTH;
           nk.ottype = T_SMOOTH;
+          nk.ow = 1.0f;
+          nk.iw = 1.0f;
+          nk.mow = std::numeric_limits<float>::max();
+          nk.miw = std::numeric_limits<float>::max();
           
           it = mKeys.insert(it, nk);
         }
@@ -351,6 +575,7 @@ namespace gmath {
         size_t idx = it - mKeys.begin();
         
         update(idx);
+        updateMaxWeights(idx);
         
         return idx;
       }
@@ -361,6 +586,9 @@ namespace gmath {
           
           if (idx > 0) {
             updateTangents(idx-1);
+            if (mWeighted) {
+              updateMaxOutWeight(idx-1);
+            }
             // the first key smooth output tangent depends on second key input tangent
             if (idx == 2 && mKeys[idx-2].ottype == T_SMOOTH) {
               updateTangents(idx-2);
@@ -369,6 +597,9 @@ namespace gmath {
           
           if (idx < mKeys.size()) {
             updateTangents(idx);
+            if (mWeighted) {
+              updateMaxInWeight(idx);
+            }
             // the last key smooth input tangent depends on second to last key output tangent
             if (idx+2 == mKeys.size() && mKeys[idx+1].ittype == T_SMOOTH) {
               updateTangents(idx+1);
@@ -387,6 +618,9 @@ namespace gmath {
           
           if (idx > 0) {
             updateTangents(idx-1);
+            if (mWeighted) {
+              updateMaxOutWeight(idx-1);
+            }
             // the first key smooth output tangent depends on second key input tangent
             if (idx == 2 && mKeys[idx-2].ottype == T_SMOOTH) {
               updateTangents(idx-2);
@@ -395,6 +629,9 @@ namespace gmath {
           
           if (idx < mKeys.size()) {
             updateTangents(idx);
+            if (mWeighted) {
+              updateMaxInWeight(idx);
+            }
             // the last key smooth input tangent depends on second to last key output tangent
             if (idx+2 == mKeys.size() && mKeys[idx+1].ittype == T_SMOOTH) {
               updateTangents(idx+1);
@@ -409,7 +646,7 @@ namespace gmath {
       
       // polies is a polynomial pair for weighted evaluation
       // if not passed, they will be created on stack at each eval call
-      T eval(float t, bool weighted=false, Polynomial *polies=NULL) const {
+      T eval(float t, Polynomial *polies=NULL) const {
         if (numKeys() == 0) {
           return 0.0f;
         } else if (numKeys() == 1) {
@@ -531,15 +768,19 @@ namespace gmath {
             value = k0.v + u * (k1.v - k0.v);
             
           } else {
-            if (weighted) {
+            if (mWeighted) {
               Polynomial _polies[2];
               int nroots = 0;
               float roots[3];
 
               T dv = k1.v - k0.v;
               
-              float tout = dt * k0.ow;
-              float tin = dt * k1.iw;
+#ifdef _DEBUG
+              if (k0.ow > k0.mow) std::cout << "Clamp out weight to " << k0.mow << std::endl;
+              if (k1.iw > k1.miw) std::cout << "Clamp in weight to " << k1.miw << std::endl;
+#endif
+              float tout = dt * (k0.ow > k0.mow ? k0.mow : k0.ow);
+              float tin = dt * (k1.iw > k1.miw ? k1.miw : k1.iw);
 
               T vout = tout * k0.ot;
               T vin = tin * k1.it;
@@ -564,12 +805,11 @@ namespace gmath {
               // Note: - roots are already sorted by getDegree3Roots
               //       - if more than one root, we may want to smooth out the result
               if (tpoly.getDegree3Roots(nroots, roots)) {
+#ifdef _DEBUG
                 if (nroots > 1) {
-                  std::cout << "t(" << t << "): More than 1 root: " << std::endl;
-                  for (int i=0; i<nroots; ++i) {
-                    std::cout << "  " << roots[i] << std::endl;
-                  }
+                  std::cout << "t(" << t << "): More than 1 root (" << nroots << ") for " << tpoly << " (derivative: " << tpoly.getDerivative() << ")" << std::endl;
                 }
+#endif
                 for (int i=0; i<nroots; ++i) {
                   if (roots[i] < 0.0f || roots[i] > 1.0f) {
                     continue;
@@ -593,7 +833,7 @@ namespace gmath {
                 }
 
               } else {
-                value = k0.v;
+                value = (u > 0.5f ? k1.v : k0.v);
               }
 
             } else {
@@ -614,6 +854,21 @@ namespace gmath {
         return (value + offset);
       }
       
+      bool isWeighted() const {
+        return mWeighted;
+      }
+      
+      void setWeighted(bool onoff) {
+        if (onoff != mWeighted) {
+          mWeighted = onoff;
+          if (mWeighted) {
+            for (size_t i=0; i<mKeys.size(); ++i) {
+              updateMaxWeights(i);
+            }
+          }
+        }
+      }
+      
       const Key& getKey(size_t idx) const {
         return mKeys[idx];
       }
@@ -631,11 +886,11 @@ namespace gmath {
       }
 
       float getOutWeight(size_t idx) const {
-        return mKeys[idx].ow;
+        return (mWeighted ? mKeys[idx].ow : 1.0f);
       }
 
       float getInWeight(size_t idx) const {
-        return mKeys[idx].iw;
+        return (mWeighted ? mKeys[idx].iw : 1.0f);
       }
       
       Interpolation getInterpolation(size_t idx) const {
@@ -661,7 +916,12 @@ namespace gmath {
       }
 
       void setInWeight(size_t idx, float w) {
-        mKeys[idx].iw = w;
+        if (mWeighted) {
+          mKeys[idx].iw = (w <= 0.0f ? mWeightEps : w);
+          if (idx > 0) {
+            updateMaxOutWeight(idx-1);
+          }
+        }
       }
       
       void setOutTangent(size_t idx, Tangent t, const T &val=T(0)) {
@@ -678,7 +938,20 @@ namespace gmath {
       }
 
       void setOutWeight(size_t idx, float w) {
-        mKeys[idx].ow = w;
+        if (mWeighted) {
+          mKeys[idx].ow = (w <= 0.0f ? mWeightEps : w);
+          if (idx+1 < numKeys()) {
+            updateMaxInWeight(idx+1);
+          }
+        }
+      }
+
+      float getWeightPrecision() const {
+        return mWeightEps;
+      }
+
+      void setWeightPrecision(float p) {
+        mWeightEps = p;
       }
        
       void setInterpolation(size_t idx, Interpolation it) {
@@ -733,6 +1006,8 @@ namespace gmath {
     protected:
       
       KeyList mKeys;
+      bool mWeighted;
+      float mWeightEps;
   };
   
 }
