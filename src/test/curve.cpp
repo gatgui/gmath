@@ -107,8 +107,11 @@ void display()
     
     if (gCurve.isWeighted())
     {
-      t = k.t - indt * k.iw;
-      v = k.v - indt * k.iw * k.it;
+      float iw = k.iw;
+      float ow = k.ow;
+      
+      t = k.t - indt * iw;
+      v = k.v - indt * iw * k.it;
       glBegin(GL_QUADS);
       glVertex2d(t - pw, v - ph);
       glVertex2d(t + pw, v - ph);
@@ -121,8 +124,8 @@ void display()
       glVertex2d(k.t, k.v);
       glEnd();
       
-      t = k.t + outdt * k.ow;
-      v = k.v + outdt * k.ow * k.ot;
+      t = k.t + outdt * ow;
+      v = k.v + outdt * ow * k.ot;
       glBegin(GL_QUADS);
       glVertex2d(t - pw, v - ph);
       glVertex2d(t + pw, v - ph);
@@ -285,6 +288,10 @@ void initGL()
 
 int main(int argc, char **argv)
 {
+  float p0[4], p1[4];
+  gPolies[0].setCoeffs(3, p0);
+  gPolies[1].setCoeffs(3, p1);
+  
   std::cout << "Set curve weighted" << std::endl;
   gCurve.setWeighted(true);
 

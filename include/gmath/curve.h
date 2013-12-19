@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2009, 2010  Gaetan Guidet
+Copyright (C) 2009~2013  Gaetan Guidet
 
 This file is part of gmath.
 
@@ -124,17 +124,17 @@ namespace gmath {
     public:
       
       struct Key {
-        float t;
-        T v;
-        Interpolation interp;
-        Tangent ottype;
-        T ot;
-        float ow;
-        float mow; // Max output weight
-        Tangent ittype;
-        T it;
-        float iw;
-        float miw; // Max input weight
+        float t;              // Time
+        T v;                  // Value
+        Interpolation interp; // Segment interpolation
+        Tangent ottype;       // Output tangent type
+        T ot;                 // Output tangent
+        float ow;             // Output weight
+        float mow;            // Max output weight
+        Tangent ittype;       // Input tangent type
+        T it;                 // Input tangent
+        float iw;             // Input weight
+        float miw;            // Max input weight
       };
       
       typedef typename std::deque<Key> KeyList;
@@ -234,7 +234,6 @@ namespace gmath {
           
           float dt = k1.t - k0.t;
           float tout = dt * k0.ow;
-          //float tout = dt;
           
           float t, w, tin, p0[4], p1[3], p2[2];
           
@@ -248,8 +247,8 @@ namespace gmath {
           int iter = 0;
           
           float wlow = 1.0f;
-          bool freeHigh = true;
           float whigh = 5.0f;
+          bool freeHigh = true;
           
           while (whigh > wlow && Abs(whigh - wlow) > mWeightEps) {
 
@@ -313,7 +312,7 @@ namespace gmath {
           mKeys[idx].miw = wlow;
           
 #ifdef _DEBUG
-          std::cout << "[" << idx << "] Max in weight[" << idx << "] = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
+          std::cout << "[" << idx << "] Max in weight = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
 #endif
         
         } else {
@@ -328,7 +327,6 @@ namespace gmath {
           
           float dt = k1.t - k0.t;
           float tin = dt * k1.iw;
-          //float tin = dt;
           
           float t, w, tout, p0[4], p1[3], p2[2];
           
@@ -342,8 +340,8 @@ namespace gmath {
           int iter = 0;
           
           float wlow = 1.0f;
-          bool freeHigh = true;
           float whigh = 5.0f;
+          bool freeHigh = true;
           
           while (whigh > wlow && Abs(whigh - wlow) > mWeightEps) {
 
@@ -407,7 +405,7 @@ namespace gmath {
           mKeys[idx].mow = wlow;
           
 #ifdef _DEBUG
-          std::cout << "[" << idx << "] Max out weight[" << idx << "] = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
+          std::cout << "[" << idx << "] Max out weight = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
 #endif
         
         } else {
@@ -493,10 +491,6 @@ namespace gmath {
         
         return false;
       }
-      
-    public:
-      
-      
       
     public:
       
@@ -770,56 +764,36 @@ namespace gmath {
           } else {
             if (mWeighted) {
               Polynomial _polies[2];
+              float p0[4], p1[4];
               int nroots = 0;
               float roots[3];
 
               T dv = k1.v - k0.v;
               
-#ifdef _DEBUG
-              if (k0.ow > k0.mow) std::cout << "Clamp out weight to " << k0.mow << std::endl;
-              if (k1.iw > k1.miw) std::cout << "Clamp in weight to " << k1.miw << std::endl;
-#endif
-              float tout = dt * (k0.ow > k0.mow ? k0.mow : k0.ow);
-              float tin = dt * (k1.iw > k1.miw ? k1.miw : k1.iw);
+              float tout = dt * k0.ow;
+              float tin = dt * k1.iw;
 
               T vout = tout * k0.ot;
               T vin = tin * k1.it;
 
               if (!polies) {
                 polies = _polies;
+                polies[0].setCoeffs(3, p0);
+                polies[1].setCoeffs(3, p1);
+              } else {
+                polies[0].setDegree(3);
+                polies[1].setDegree(3);
               }
-
+              
               Polynomial &tpoly = polies[0];
               Polynomial &vpoly = polies[1];
-
-              tpoly.setDegree(3);
-              vpoly.setDegree(3);
-
-              tpoly[0] = -u * dt; // -((t - prev) / (next - prev)) * (next - prev) = prev - t
+              
+              tpoly[0] = -u * dt;
               tpoly[1] = tout;
               tpoly[2] = 3*dt - 2*tout - tin;
               tpoly[3] = -2*dt + tout + tin;
-
-              int iroot = -1;
-              // Use the first root in [0,1] range
-              // Note: - roots are already sorted by getDegree3Roots
-              //       - if more than one root, we may want to smooth out the result
-              if (tpoly.getDegree3Roots(nroots, roots)) {
-#ifdef _DEBUG
-                if (nroots > 1) {
-                  std::cout << "t(" << t << "): More than 1 root (" << nroots << ") for " << tpoly << " (derivative: " << tpoly.getDerivative() << ")" << std::endl;
-                }
-#endif
-                for (int i=0; i<nroots; ++i) {
-                  if (roots[i] < 0.0f || roots[i] > 1.0f) {
-                    continue;
-                  }
-                  iroot = i;
-                  break;
-                }
-              }
-
-              if (iroot >= 0) {
+              
+              if (tpoly.getDegree3Roots(nroots, roots) && nroots > 0) {
                 float idv, ivout, ivin;
                 for (int i=0; i<ValueComp<T>::Count; ++i) {
                   idv = ValueComp<T>::Get(dv, i);
@@ -829,9 +803,8 @@ namespace gmath {
                   vpoly[1] = ivout;
                   vpoly[2] = 3*idv - 2*ivout - ivin;
                   vpoly[3] = -2*idv + ivout + ivin;
-                  ValueComp<T>::Set(value, i, vpoly.eval(roots[iroot]));
+                  ValueComp<T>::Set(value, i, vpoly.eval(roots[0]));
                 }
-
               } else {
                 value = (u > 0.5f ? k1.v : k0.v);
               }
@@ -917,7 +890,7 @@ namespace gmath {
 
       void setInWeight(size_t idx, float w) {
         if (mWeighted) {
-          mKeys[idx].iw = (w <= 0.0f ? mWeightEps : w);
+          mKeys[idx].iw = (w <= 0.0f ? mWeightEps : (w > mKeys[idx].miw ? mKeys[idx].miw : w));
           if (idx > 0) {
             updateMaxOutWeight(idx-1);
           }
@@ -939,7 +912,7 @@ namespace gmath {
 
       void setOutWeight(size_t idx, float w) {
         if (mWeighted) {
-          mKeys[idx].ow = (w <= 0.0f ? mWeightEps : w);
+          mKeys[idx].ow = (w <= 0.0f ? mWeightEps : (w > mKeys[idx].mow ? mKeys[idx].mow : w));
           if (idx+1 < numKeys()) {
             updateMaxInWeight(idx+1);
           }
