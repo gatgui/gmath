@@ -42,6 +42,7 @@ int gResolY = 512;
 float gWeightIncr = 0.1f;
 size_t gCurKey = 0;
 bool gCurOut = true;
+float gDispIncr = 1.0f;
 
 void display()
 {
@@ -302,9 +303,59 @@ void keyboard(unsigned char key, int, int)
     gMaxY += 1.0f;
     reshape(gResolX, gResolY);
   }
+  else if (key == 'r')
+  {
+    gDispIncr = 1.0f;
+    gMinX = -1.0;
+    gMaxX = 6.0;
+    gMinY = -5.0;
+    gMaxY = 5.0; 
+    reshape(gResolX, gResolY);
+  }
+  else if (key == 'd')
+  {
+    if (gDispIncr >= 0.001f)
+    {
+      gDispIncr *= 0.5f;
+      std::cout << "Display move/scale increment " << gDispIncr << std::endl;
+    }
+  }
+  else if (key == 'D')
+  {
+    gDispIncr *= 2.0f;
+    std::cout << "Display move/scale increment " << gDispIncr << std::endl;
+  }
   else
   {
     std::cout << "Key " << int(key) << " pressed" << std::endl;
+  }
+}
+
+void keyboard2(int key, int, int)
+{
+  if (key == GLUT_KEY_LEFT)
+  {
+    gMinX += gDispIncr;
+    gMaxX += gDispIncr;
+    reshape(gResolX, gResolY);
+  }
+  else if (key == GLUT_KEY_RIGHT)
+  {
+    gMinX -= gDispIncr;
+    gMaxX -= gDispIncr;
+    reshape(gResolX, gResolY);
+  }
+  else if (key == GLUT_KEY_UP)
+  {
+    gMinY -= gDispIncr;
+    gMaxY -= gDispIncr;
+    reshape(gResolX, gResolY);
+  }
+  else if (key == GLUT_KEY_DOWN)
+  {
+    gMinY += gDispIncr;
+    gMaxY += gDispIncr;
+    reshape(gResolX, gResolY);
   }
 }
 
@@ -319,6 +370,7 @@ int main(int argc, char **argv)
 {
   std::cout << "Set curve weighted" << std::endl;
   gCurve.setWeighted(true);
+  gCurve.setWeightPrecision(0.01f);
 
   std::cout << "Insert key at t = 0.0" << std::endl;
   gCurve.insert(0.0f, 0.0f);
@@ -352,6 +404,7 @@ int main(int argc, char **argv)
   glutDisplayFunc(display);
   glutReshapeFunc(reshape);
   glutKeyboardFunc(keyboard);
+  glutSpecialFunc(keyboard2);
   glutMainLoop();
   
   return 0;

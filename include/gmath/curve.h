@@ -147,6 +147,10 @@ namespace gmath {
       
       void updateTangents(size_t idx) {
         Key &k = mKeys[idx];
+
+        if (k.ittype == T_CUSTOM && k.ottype == T_CUSTOM) {
+          return;
+        }
         
         T sit = T(0);
         T sot = T(0);
@@ -192,14 +196,17 @@ namespace gmath {
           k.it = T(0);
           updw = mWeighted && (updw || (Abs(1.0f - k.iw) > mWeightEps));
           k.iw = 1.0f;
+
         } else if (k.ittype == T_LINEAR) {
           k.it = lit;
           updw = mWeighted && (updw || (Abs(1.0f - k.iw) > mWeightEps));
           k.iw = 1.0f;
+
         } else if (k.ittype == T_SMOOTH) {
           k.it = sit;
           updw = mWeighted && (updw || (Abs(1.0f - k.iw) > mWeightEps));
           k.iw = 1.0f;
+
         } else {
           // T_CUSTOM
           // keep value
@@ -209,14 +216,17 @@ namespace gmath {
           k.ot = T(0);
           updw = mWeighted && (updw || (Abs(1.0f - k.ow) > mWeightEps));
           k.ow = 1.0f;
+
         } else if (k.ottype == T_LINEAR) {
           k.ot = lot;
           updw = mWeighted && (updw || (Abs(1.0f - k.ow) > mWeightEps));
           k.ow = 1.0f;
+
         } else if (k.ottype == T_SMOOTH) {
           k.ot = sot;
           updw = mWeighted && (updw || (Abs(1.0f - k.ow) > mWeightEps));
           k.ow = 1.0f;
+
         } else {
           // T_CUSTOM
           // keep value
@@ -228,6 +238,7 @@ namespace gmath {
       }
       
       void updateMaxInWeight(size_t idx) {
+        // NOTE: needs perfecting when previous key out weight tends to 0, max weight then tends to 1...
         if (idx > 0) {
           Key &k0 = mKeys[idx-1];
           Key &k1 = mKeys[idx];
@@ -304,16 +315,19 @@ namespace gmath {
             } else {
               wlow = w;
               if (freeHigh) {
-                whigh *= 2.0f;
+                whigh += 1.0f;
               }
             }
+            #ifdef _DEBUG
+            std::cout << "Adjust weight search range to [" << wlow << ", " << whigh << "]" << std::endl;
+            #endif
           }
 
           mKeys[idx].miw = wlow;
           
-#ifdef _DEBUG
+          #ifdef _DEBUG
           std::cout << "[" << idx << "] Max in weight = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
-#endif
+          #endif
         
         } else {
           mKeys[idx].miw = std::numeric_limits<float>::max();
@@ -321,6 +335,7 @@ namespace gmath {
       }
       
       void updateMaxOutWeight(size_t idx) {
+        // NOTE: needs perfecting when next key in weight tends to 0, max weight then tends to 1...
         if (idx+1 < numKeys()) {
           Key &k0 = mKeys[idx];
           Key &k1 = mKeys[idx+1];
@@ -397,16 +412,19 @@ namespace gmath {
             } else {
               wlow = w;
               if (freeHigh) {
-                whigh *= 2.0f;
+                whigh += 1.0f;
               }
             }
+            #ifdef _DEBUG
+            std::cout << "Adjust weight search range to [" << wlow << ", " << whigh << "]" << std::endl;
+            #endif
           }
 
           mKeys[idx].mow = wlow;
           
-#ifdef _DEBUG
+          #ifdef _DEBUG
           std::cout << "[" << idx << "] Max out weight = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
-#endif
+          #endif
         
         } else {
           mKeys[idx].mow = std::numeric_limits<float>::max();
@@ -418,10 +436,11 @@ namespace gmath {
         updateMaxOutWeight(idx);
       }
       
-      void update(size_t idx) {
+      void update(size_t idx, bool inserted) {
         if (idx > 0) {
           updateTangents(idx-1);
-          if (mWeighted) {
+          if (mWeighted && inserted) {
+            // if newly inserted key, need to update surrounding key max weights
             updateMaxOutWeight(idx-1);
           }
           // if first key output tangent is set to smooth, it depends on the second key input tangent
@@ -435,7 +454,8 @@ namespace gmath {
         
         if (idx+1 < mKeys.size()) {
           updateTangents(idx+1);
-          if (mWeighted) {
+          if (mWeighted && inserted) {
+            // if newly inserted key, need to update surrounding key max weights
             updateMaxInWeight(idx+1);
           }
           // if last key input tangent is set to smooth, it depends on the second to last key output tangent
@@ -443,6 +463,10 @@ namespace gmath {
           if (idx+3 == mKeys.size() && mKeys[idx+1].ottype != T_CUSTOM && mKeys[idx+2].ittype == T_SMOOTH) {
             updateTangents(idx+2);
           }
+        }
+
+        if (mWeighted && inserted) {
+          updateMaxWeights(idx);
         }
       }
       
@@ -495,7 +519,7 @@ namespace gmath {
     public:
       
       TCurve()
-        : Curve(), mWeighted(false), mWeightEps(0.001f) {
+        : Curve(), mWeighted(false), mWeightEps(0.01f) {
       }
       
       TCurve(const TCurve<T> &rhs)
@@ -543,11 +567,13 @@ namespace gmath {
       
       size_t insert(float t, T v, bool overwrite=false, float e=EPS6) {
         typename KeyList::iterator it;
+        bool inserted = true;
         
         if (find(t, e, it)) {
           if (overwrite == false) {
             return (it - mKeys.begin());
           }
+          inserted = false;
           
         } else {
           Key nk;
@@ -568,8 +594,7 @@ namespace gmath {
         
         size_t idx = it - mKeys.begin();
         
-        update(idx);
-        updateMaxWeights(idx);
+        update(idx, inserted);
         
         return idx;
       }
@@ -837,6 +862,14 @@ namespace gmath {
             for (size_t i=0; i<mKeys.size(); ++i) {
               updateMaxWeights(i);
             }
+          } else {
+            for (size_t i=0; i<mKeys.size(); ++i) {
+              Key &k = mKeys[i];
+              k.ow = 1.0f;
+              k.iw = 1.0f;
+              k.mow = std::numeric_limits<float>::max();
+              k.miw = std::numeric_limits<float>::max();
+            }
           }
         }
       }
@@ -858,11 +891,11 @@ namespace gmath {
       }
 
       float getOutWeight(size_t idx) const {
-        return (mWeighted ? mKeys[idx].ow : 1.0f);
+        return mKeys[idx].ow;
       }
 
       float getInWeight(size_t idx) const {
-        return (mWeighted ? mKeys[idx].iw : 1.0f);
+        return mKeys[idx].iw;
       }
       
       Interpolation getInterpolation(size_t idx) const {
@@ -871,7 +904,8 @@ namespace gmath {
       
       void setValue(size_t idx, const T &val) {
         mKeys[idx].v = val;
-        update(idx);
+        // do not need to adjust surrounding keys max weights
+        update(idx, false);
       }
       
       void setInTangent(size_t idx, Tangent t, const T &val=T(0)) {
@@ -889,9 +923,14 @@ namespace gmath {
 
       void setInWeight(size_t idx, float w) {
         if (mWeighted) {
-          mKeys[idx].iw = (w < 0.0f ? 0.0f : (w > mKeys[idx].miw ? mKeys[idx].miw : w));
+          Key &ck = mKeys[idx];
+          ck.iw = (w < 0.0f ? 0.0f : (w > ck.miw ? ck.miw : w));
           if (idx > 0) {
+            Key &pk = mKeys[idx-1];
             updateMaxOutWeight(idx-1);
+            if (pk.ow > pk.mow) {
+              pk.ow = pk.mow;
+            }
           }
         }
       }
@@ -911,9 +950,14 @@ namespace gmath {
 
       void setOutWeight(size_t idx, float w) {
         if (mWeighted) {
-          mKeys[idx].ow = (w < 0.0f ? 0.0f : (w > mKeys[idx].mow ? mKeys[idx].mow : w));
+          Key &ck = mKeys[idx];
+          ck.ow = (w < 0.0f ? 0.0f : (w > ck.mow ? ck.mow : w));
           if (idx+1 < numKeys()) {
+            Key &nk = mKeys[idx+1];
             updateMaxInWeight(idx+1);
+            if (nk.iw > nk.miw) {
+              nk.iw = nk.miw;
+            }
           }
         }
       }
