@@ -946,6 +946,10 @@ namespace gmath {
         }
       }
 
+      inline void setInTangent(size_t idx, const T &val) {
+        setInTangent(idx, T_CUSTOM, val);
+      }
+
       void setInWeight(size_t idx, float w) {
         if (mWeighted) {
           Key &ck = mKeys[idx];
@@ -978,6 +982,10 @@ namespace gmath {
         if (idx+2 == mKeys.size() && mKeys[idx+1].ittype == T_SMOOTH) {
           updateTangents(idx+1);
         }
+      }
+
+      inline void setOutTangent(size_t idx, const T &val) {
+        setOutTangent(idx, T_CUSTOM, val);
       }
 
       void setOutWeight(size_t idx, float w) {
