@@ -237,7 +237,7 @@ namespace gmath {
         }
       }
       
-      void updateMaxInWeight(size_t idx) {
+      bool updateMaxInWeight(size_t idx) {
         // NOTE: needs perfecting when previous key out weight tends to 0, max weight then tends to 1...
         if (idx > 0) {
           Key &k0 = mKeys[idx-1];
@@ -298,7 +298,7 @@ namespace gmath {
                     }
 
                   } else {
-                    t = tpoly.eval(croots[i].re);
+                    t = tpoly(croots[i].re);
                     if (t >= k0.t && t <= k1.t) {
                       willClamp = true;
                       break;
@@ -307,10 +307,17 @@ namespace gmath {
                 }
               }
             }
-            
+                        
             if (willClamp) {
               whigh = w;
               freeHigh = false;
+              if (w < mKeys[idx].iw) {
+                // Would modify current in weight
+                #ifdef _DEBUG
+                std::cout << "Would change next key in weight" << std::endl;
+                #endif
+                return false;
+              }
 
             } else {
               wlow = w;
@@ -318,23 +325,18 @@ namespace gmath {
                 whigh += 1.0f;
               }
             }
-            #ifdef _DEBUG
-            std::cout << "Adjust weight search range to [" << wlow << ", " << whigh << "]" << std::endl;
-            #endif
           }
 
           mKeys[idx].miw = wlow;
-          
-          #ifdef _DEBUG
-          std::cout << "[" << idx << "] Max in weight = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
-          #endif
         
         } else {
           mKeys[idx].miw = std::numeric_limits<float>::max();
         }
+
+        return true;
       }
       
-      void updateMaxOutWeight(size_t idx) {
+      bool updateMaxOutWeight(size_t idx) {
         // NOTE: needs perfecting when next key in weight tends to 0, max weight then tends to 1...
         if (idx+1 < numKeys()) {
           Key &k0 = mKeys[idx];
@@ -395,7 +397,7 @@ namespace gmath {
                     }
 
                   } else {
-                    t = tpoly.eval(croots[i].re);
+                    t = tpoly(croots[i].re);
                     if (t >= k0.t && t <= k1.t) {
                       willClamp = true;
                       break;
@@ -404,10 +406,19 @@ namespace gmath {
                 }
               }
             }
+
+            // use also value at clamp time if == k0.t or k1.t to decide
             
             if (willClamp) {
               whigh = w;
               freeHigh = false;
+              if (w < mKeys[idx].ow) {
+                // Would modify current out weight
+                #ifdef _DEBUG
+                std::cout << "Would change prev key out weight" << std::endl;
+                #endif
+                return false;
+              }
 
             } else {
               wlow = w;
@@ -415,25 +426,19 @@ namespace gmath {
                 whigh += 1.0f;
               }
             }
-            #ifdef _DEBUG
-            std::cout << "Adjust weight search range to [" << wlow << ", " << whigh << "]" << std::endl;
-            #endif
           }
 
           mKeys[idx].mow = wlow;
-          
-          #ifdef _DEBUG
-          std::cout << "[" << idx << "] Max out weight = " << wlow << " {" << tpoly << ", t in [" << k0.t << ", " << k1.t << "], " << iter << " iteration(s)}" << std::endl;
-          #endif
         
         } else {
           mKeys[idx].mow = std::numeric_limits<float>::max();
         }
+
+        return true;
       }
 
-      void updateMaxWeights(size_t idx) {
-        updateMaxInWeight(idx);
-        updateMaxOutWeight(idx);
+      bool updateMaxWeights(size_t idx) {
+        return (updateMaxInWeight(idx) && updateMaxOutWeight(idx));
       }
       
       void update(size_t idx, bool inserted) {
@@ -594,6 +599,20 @@ namespace gmath {
         
         size_t idx = it - mKeys.begin();
         
+        if (mWeighted) {
+          if (idx > 0) {
+            #ifdef _DEBUG
+            std::cout << "Reset previous key out weight" << std::endl;
+            #endif
+            mKeys[idx-1].ow = 1.0f;
+          }
+          if (idx+1 < mKeys.size()) {
+            #ifdef _DEBUG
+            std::cout << "Reset next key in weight" << std::endl;
+            #endif
+            mKeys[idx+1].ow = 1.0f;
+          }
+        }
         update(idx, inserted);
         
         return idx;
@@ -602,26 +621,56 @@ namespace gmath {
       void remove(int idx) {
         if (idx < numKeys()) {
           mKeys.erase(mKeys.begin() + idx);
+          // idx-1: previous key
+          // idx  : next key
           
           if (idx > 0) {
-            updateTangents(idx-1);
             if (mWeighted) {
-              updateMaxOutWeight(idx-1);
+              #ifdef _DEBUG
+              std::cout << "Reset previous key out weight" << std::endl;
+              #endif
+              mKeys[idx-1].ow = 1.0f;
             }
+            updateTangents(idx-1);
+            //if (mWeighted) {
+            //  updateMaxOutWeight(idx-1);
+            //}
             // the first key smooth output tangent depends on second key input tangent
             if (idx == 2 && mKeys[idx-2].ottype == T_SMOOTH) {
               updateTangents(idx-2);
             }
+          } else {
+            // first key removed
+            if (mWeighted) {
+              #ifdef _DEBUG
+              std::cout << "Reset first key in weight" << std::endl;
+              #endif
+              mKeys.front().iw = 1.0f;
+            }
           }
           
           if (idx < mKeys.size()) {
-            updateTangents(idx);
             if (mWeighted) {
-              updateMaxInWeight(idx);
+              #ifdef _DEBUG
+              std::cout << "Reset next key in weight" << std::endl;
+              #endif
+              mKeys[idx].iw = 1.0f;
             }
+            updateTangents(idx);
+            //if (mWeighted) {
+            //  updateMaxInWeight(idx);
+            //}
             // the last key smooth input tangent depends on second to last key output tangent
             if (idx+2 == mKeys.size() && mKeys[idx+1].ittype == T_SMOOTH) {
               updateTangents(idx+1);
+            }
+          } else {
+            // last key removed
+            if (mWeighted) {
+              #ifdef _DEBUG
+              std::cout << "Reset last key out weight" << std::endl;
+              #endif
+              mKeys.back().ow = 1.0f;
             }
           }
         }
@@ -631,31 +680,7 @@ namespace gmath {
         typename KeyList::iterator it;
         
         if (find(t, e, it)) {
-          it = mKeys.erase(it);
-          
-          size_t idx = it - mKeys.begin();
-          
-          if (idx > 0) {
-            updateTangents(idx-1);
-            if (mWeighted) {
-              updateMaxOutWeight(idx-1);
-            }
-            // the first key smooth output tangent depends on second key input tangent
-            if (idx == 2 && mKeys[idx-2].ottype == T_SMOOTH) {
-              updateTangents(idx-2);
-            }
-          }
-          
-          if (idx < mKeys.size()) {
-            updateTangents(idx);
-            if (mWeighted) {
-              updateMaxInWeight(idx);
-            }
-            // the last key smooth input tangent depends on second to last key output tangent
-            if (idx+2 == mKeys.size() && mKeys[idx+1].ittype == T_SMOOTH) {
-              updateTangents(idx+1);
-            }
-          }
+          remove(int(it - mKeys.begin()));
         }
       }
       
@@ -924,10 +949,17 @@ namespace gmath {
       void setInWeight(size_t idx, float w) {
         if (mWeighted) {
           Key &ck = mKeys[idx];
+          float cw = ck.iw;
           ck.iw = (w < 0.0f ? 0.0f : (w > ck.miw ? ck.miw : w));
           if (idx > 0) {
             Key &pk = mKeys[idx-1];
-            updateMaxOutWeight(idx-1);
+            if (!updateMaxOutWeight(idx-1)) {
+              #ifdef _DEBUG
+              std::cout << "Cannot set weight" << std::endl;
+              #endif
+              ck.iw = cw;
+              return;
+            }
             if (pk.ow > pk.mow) {
               pk.ow = pk.mow;
             }
@@ -951,10 +983,17 @@ namespace gmath {
       void setOutWeight(size_t idx, float w) {
         if (mWeighted) {
           Key &ck = mKeys[idx];
+          float cw = ck.ow;
           ck.ow = (w < 0.0f ? 0.0f : (w > ck.mow ? ck.mow : w));
           if (idx+1 < numKeys()) {
             Key &nk = mKeys[idx+1];
-            updateMaxInWeight(idx+1);
+            if (!updateMaxInWeight(idx+1)) {
+              #ifdef _DEBUG
+              std::cout << "Cannot set weight" << std::endl;
+              #endif
+              ck.ow = cw;
+              return;
+            }
             if (nk.iw > nk.miw) {
               nk.iw = nk.miw;
             }
