@@ -12,6 +12,12 @@ from excons.tools import lua, gl, glut
 
 staticBuild = (int(ARGUMENTS.get("static", "0")) == 1)
 
+def NoDeprecated(env):
+   import sys
+   if sys.platform == "darwin":
+      # On recent OSX (10.9~) GLUT is deprecated
+      env.Append(CPPFLAGS=" -Wno-deprecated-declarations")
+
 prjs = [
   { "name"    : "gmath",
     "type"    : ("staticlib" if staticBuild else "sharedlib"),
@@ -24,7 +30,7 @@ prjs = [
     "incdirs" : ["include"],
     "srcs"    : glob.glob("src/test/*.cpp"),
     "libs"    : ["gmath"],
-    "custom"  : [gl.Require, glut.Require],
+    "custom"  : [gl.Require, glut.Require, NoDeprecated],
     "defs"    : (["GMATH_STATIC"] if staticBuild else [])
   },
   { "name"    : "luagmath",

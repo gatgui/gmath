@@ -97,7 +97,7 @@ namespace gmath
       static bool Inverse(int W, int H, int D, const T *src, T *dst, int srcStride=1, int dstStride=1);
       
       template <typename T>
-      static bool Inverse(int W, int H, int D, int N, T *data, int stride=1);
+      static bool Inverse(int W, int H, int D, T *data, int stride=1);
    };
 }
 
@@ -451,7 +451,7 @@ bool gmath::FFT::Inverse(int W, int H, int D, const T *src, T *dst, int srcStrid
 }
 
 template <typename T>
-bool gmath::FFT::Inverse(int W, int H, int D, int N, T *data, int stride)
+bool gmath::FFT::Inverse(int W, int H, int D, T *data, int stride)
 {
    if (!data || W <= 0 || H <= 0 || D <= 0 || !IsPowerOf2(W) || !IsPowerOf2(H) || !IsPowerOf2(D))
    {
