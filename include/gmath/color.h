@@ -203,6 +203,7 @@ namespace gmath
       bool operator>=(const TColor<Base> &rhs) const;
 
       TColor<Base>& operator=(const TColor<Base> &rhs);
+      TColor<Base> operator-() const;
       TColor<Base>& operator+=(const TColor<Base> &rhs);
       TColor<Base>& operator+=(float v);
       TColor<Base>& operator-=(const TColor<Base> &rhs);
@@ -235,8 +236,8 @@ namespace gmath
    GMATH_API RGB HSLtoRGB(const HSL &hsl);
    GMATH_API RGB HSVtoRGB(const HSV &hsv);
 
-   GMATH_API HSL RGBtoHSL(const RGB &rgb, float epsilon=0.000001f);
-   GMATH_API HSV RGBtoHSV(const RGB &rgb, float epsilon=0.000001f);
+   GMATH_API HSL RGBtoHSL(const RGB &rgb, float epsilon=EPS6);
+   GMATH_API HSV RGBtoHSV(const RGB &rgb, float epsilon=EPS6);
 
    GMATH_API float Chroma(const RGB &rgb);
    GMATH_API float Luminance(const RGB &rgb);
@@ -354,6 +355,17 @@ namespace gmath
    {
       Base::operator=(rhs);
       return *this;
+   }
+
+   template <class Base>
+   TColor<Base> TColor<Base>::operator-() const
+   {
+      TColor<Base> rv;
+      for (int i=0; i<Base::Dim; ++i)
+      {
+         rv[i] = -self[i];
+      }
+      return rv;
    }
 
    template <class Base>
