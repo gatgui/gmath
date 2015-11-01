@@ -10,13 +10,13 @@ float Chroma(const RGB &rgb)
    return (M - m);
 }
 
-float Luminance(const RGB &rgb)
-{
-   // Rec. 709 (sRGB)
-   //return 0.21f * r + 0.72f * g + 0.07 * b;
-   // Rec. 601 NTSC
-   return (0.3f * rgb.r + 0.59f * rgb.g + 0.11f * rgb.b);
-}
+// float Luminance(const RGB &rgb)
+// {
+//    // Rec. 709 (sRGB)
+//    //return 0.21f * r + 0.72f * g + 0.07 * b;
+//    // Rec. 601 NTSC
+//    return (0.3f * rgb.r + 0.59f * rgb.g + 0.11f * rgb.b);
+// }
 
 float Intensity(const RGB &rgb)
 {
@@ -252,6 +252,154 @@ RGB HSLtoRGB(const HSL &hsl)
    rgb.b += m;
 
    return rgb;
+}
+
+RGBA RGBtoRGBA(const RGB &rgb, float a)
+{
+   RGBA rgba;
+   rgba.r = rgb.r;
+   rgba.g = rgb.g;
+   rgba.b = rgb.b;
+   rgba.a = a;
+   return rgba;
+}
+
+RGB RGBAtoRGB(const RGBA &rgba, bool premult)
+{
+   RGB rgb;
+   rgb.r = rgba.r;
+   rgb.g = rgba.g;
+   rgb.b = rgba.b;
+   if (premult)
+   {
+      rgb.r *= rgba.a;
+      rgb.g *= rgba.a;
+      rgb.b *= rgba.a;
+   }
+   return rgb;
+}
+
+RGB Expand(const RGB &c, NonLinearTransform nlt)
+{
+   static float sRGBScale = 1.0f / 12.92f;
+
+   RGB rgb;
+
+   switch (nlt)
+   {
+   case NLT_Gamma22:
+      rgb.r = powf(c.r, 2.2f);
+      rgb.g = powf(c.g, 2.2f);
+      rgb.b = powf(c.b, 2.2f);
+      break;
+   case NLT_Gamma24:
+      rgb.r = powf(c.r, 2.4f);
+      rgb.g = powf(c.g, 2.4f);
+      rgb.b = powf(c.b, 2.4f);
+      break;
+   case NLT_sRGB:
+      rgb.r = c.r <= 0.04045f ? c.r * sRGBScale : powf((c.r + 0.055f) / 1.055f, 2.4f);
+      rgb.g = c.g <= 0.04045f ? c.g * sRGBScale : powf((c.g + 0.055f) / 1.055f, 2.4f);
+      rgb.b = c.b <= 0.04045f ? c.b * sRGBScale : powf((c.b + 0.055f) / 1.055f, 2.4f);
+      break;
+   case NLT_rec709:
+      // TODO
+      
+   default:
+      rgb = c;
+   }
+
+   return rgb;
+}
+
+RGB Compress(const RGB &c, NonLinearTransform nlt)
+{
+   static float invGamma22 = 1.0f / 2.2f;
+   static float invGamma24 = 1.0f / 2.4f;
+
+   RGB rgb;
+
+   switch (nlt)
+   {
+   case NLT_Gamma22:
+      rgb.r = powf(c.r, invGamma22);
+      rgb.g = powf(c.g, invGamma22);
+      rgb.b = powf(c.b, invGamma22);
+      break;
+   case NLT_Gamma24:
+      rgb.r = powf(c.r, invGamma24);
+      rgb.g = powf(c.g, invGamma24);
+      rgb.b = powf(c.b, invGamma24);
+      break;
+   case NLT_sRGB:
+      rgb.r = c.r <= 0.0031308f ? 12.92f * c.r : 1.055f * powf(c.r, invGamma24) - 0.055f;
+      rgb.g = c.g <= 0.0031308f ? 12.92f * c.g : 1.055f * powf(c.g, invGamma24) - 0.055f;
+      rgb.b = c.b <= 0.0031308f ? 12.92f * c.b : 1.055f * powf(c.b, invGamma24) - 0.055f;
+      break;
+   case NLT_rec709:
+      // TODO
+   default:
+      rgb = c;
+   }
+
+   return rgb;
+}
+
+ColorSpace::ColorSpace(const Chromaticity &r,
+                       const Chromaticity &g,
+                       const Chromaticity &b,
+                       const Chromaticity &w)
+{
+   Vector3 X(r.x, r.y, 1.0f - (r.x + r.y));
+   Vector3 Y(g.x, g.y, 1.0f - (g.x + g.y));
+   Vector3 Z(b.x, b.y, 1.0f - (b.x + b.y));
+   Vector3 W(w.x, w.y, 1.0f - (w.x + w.y));
+
+   mRGBtoXYZ.setColumn(0, X);
+   mRGBtoXYZ.setColumn(1, Y);
+   mRGBtoXYZ.setColumn(2, Z);
+
+   W /= w.y;
+
+   Vector3 scl = mRGBtoXYZ.getInverse() * W;
+
+   mRGBtoXYZ.setColumn(0, scl.x * mRGBtoXYZ.getColumn(0));
+   mRGBtoXYZ.setColumn(1, scl.y * mRGBtoXYZ.getColumn(1));
+   mRGBtoXYZ.setColumn(2, scl.z * mRGBtoXYZ.getColumn(2));
+
+   mXYZtoRGB = mRGBtoXYZ.getInverse();
+}
+
+ColorSpace::ColorSpace(const ColorSpace &rhs)
+   : mXYZtoRGB(rhs.mXYZtoRGB)
+   , mRGBtoXYZ(rhs.mRGBtoXYZ)
+{
+}
+
+ColorSpace& ColorSpace::operator=(const ColorSpace &rhs)
+{
+   if (this != &rhs)
+   {
+      mXYZtoRGB = rhs.mXYZtoRGB;
+      mRGBtoXYZ = rhs.mRGBtoXYZ;
+   }
+   return *this;
+}
+
+float ColorSpace::luminance(const RGB &rgb) const
+{
+   XYZ xyz = RGBtoXYZ(rgb);
+   return xyz.y;
+}
+
+XYZ ColorSpace::RGBtoXYZ(const RGB &rgb) const
+{
+   return XYZ(mRGBtoXYZ * Vector3(rgb));
+}
+
+RGB ColorSpace::XYZtoRGB(const XYZ &xyz) const
+{
+   return RGB(mXYZtoRGB * Vector3(xyz));
 }
 
 } // namespace gmath

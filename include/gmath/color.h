@@ -25,6 +25,8 @@ USA.
 #define __gmath_color_h__
 
 #include <gmath/config.h>
+#include <gmath/vector.h>
+#include <gmath/matrix.h>
 
 namespace gmath
 {
@@ -239,17 +241,92 @@ namespace gmath
    GMATH_API HSL RGBtoHSL(const RGB &rgb, float epsilon=EPS6);
    GMATH_API HSV RGBtoHSV(const RGB &rgb, float epsilon=EPS6);
 
+   GMATH_API RGBA RGBtoRGBA(const RGB &rgb, float a=1.0f);
+   GMATH_API RGB RGBAtoRGB(const RGBA &rgba, bool premult=false);
+
    GMATH_API float Chroma(const RGB &rgb);
-   GMATH_API float Luminance(const RGB &rgb);
+   // GMATH_API float Luminance(const RGB &rgb);
    GMATH_API float Intensity(const RGB &rgb);
    GMATH_API RGB Grade(const RGB &rgb, const RGB &black, const RGB &white, const RGB &lift, const RGB &gain);
 
-   // RGB <-> RGBA
-   // RGB <-> XYZ
-   // ColorSpace (chromaticities + white point)
-   // Linearize/Unlinearize (Pure gamma curve, Rec 709, sRGB with pseudo gamma curves)
+   enum NonLinearTransform
+   {
+      NLT_Gamma22 = 0,
+      NLT_Gamma24,
+      NLT_sRGB,
+      NLT_rec709
+   };
+
+   // Convert compressed color to linear color
+   GMATH_API RGB Expand(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
+
+   // Convert linear color to compressed color
+   GMATH_API RGB Compress(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
+
+   struct Chromaticity
+   {
+      float x;
+      float y;
+
+      Chromaticity();
+      Chromaticity(float _x, float _y);
+      Chromaticity(const Chromaticity &rhs);
+
+      Chromaticity& operator=(const Chromaticity &rhs);
+   };
+
+   class ColorSpace
+   {
+   public:
+      ColorSpace(const Chromaticity &r,
+                 const Chromaticity &g,
+                 const Chromaticity &b,
+                 const Chromaticity &w);
+      ColorSpace(const ColorSpace &rhs);
+
+      ColorSpace& operator=(const ColorSpace &rhs);
+
+      float luminance(const RGB &c) const;
+      XYZ RGBtoXYZ(const RGB &rgb) const;
+      RGB XYZtoRGB(const XYZ &xyz) const;
+
+   public:
+
+      //static const ColorSpace HDTV;
+      //static const ColorSpace NTSC;
+      //static const ColorSpace sRGB;
+      //...
+
+   private:
+      ColorSpace();
+
+      Matrix3 mXYZtoRGB;
+      Matrix3 mRGBtoXYZ;
+   };
 
    // ---
+
+   inline Chromaticity::Chromaticity()
+      : x(0.0f), y(0.0f)
+   {
+   }
+
+   inline Chromaticity::Chromaticity(float _x, float _y)
+      : x(_x), y(_y)
+   {
+   }
+
+   inline Chromaticity::Chromaticity(const Chromaticity &rhs)
+      : x(rhs.x), y(rhs.y)
+   {
+   }
+
+   inline Chromaticity& Chromaticity::operator=(const Chromaticity &rhs)
+   {
+      x = rhs.x;
+      y = rhs.y;
+      return *this;
+   }
 
 // shortcut
 #define self (*this)
@@ -533,143 +610,142 @@ namespace gmath
    }
 
 #undef self
+}
 
-   template <class Base>
-   TColor<Base> operator+(const TColor<Base> &c0, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c0);
-      rv += c1;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator+(const gmath::TColor<Base> &c0, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c0);
+   rv += c1;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator+(const TColor<Base> &c0, float v)
-   {
-      TColor<Base> rv(c0);
-      rv += v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator+(const gmath::TColor<Base> &c0, float v)
+{
+   gmath::TColor<Base> rv(c0);
+   rv += v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator+(float v, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c1);
-      rv += v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator+(float v, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c1);
+   rv += v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator-(const TColor<Base> &c0, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c0);
-      rv -= c1;
-      return rv;
-   }
-   
-   template <class Base>
-   TColor<Base> operator-(const TColor<Base> &c0, float v)
-   {
-      TColor<Base> rv(c0);
-      rv -= v;
-      return rv;
-   }
-   
-   template <class Base>
-   TColor<Base> operator-(float v, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c1);
-      rv -= v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator-(const gmath::TColor<Base> &c0, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c0);
+   rv -= c1;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator*(const TColor<Base> &c0, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c0);
-      rv *= c1;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator-(const gmath::TColor<Base> &c0, float v)
+{
+   gmath::TColor<Base> rv(c0);
+   rv -= v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator*(const TColor<Base> &c0, float v)
-   {
-      TColor<Base> rv(c0);
-      rv *= v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator-(float v, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c1);
+   rv -= v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator*(float v, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c1);
-      rv *= v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator*(const gmath::TColor<Base> &c0, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c0);
+   rv *= c1;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator/(const TColor<Base> &c0, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c0);
-      rv /= c1;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator*(const gmath::TColor<Base> &c0, float v)
+{
+   gmath::TColor<Base> rv(c0);
+   rv *= v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator/(const TColor<Base> &c0, float v)
-   {
-      TColor<Base> rv(c0);
-      rv /= v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator*(float v, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c1);
+   rv *= v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator/(float v, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c1);
-      rv /= v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator/(const gmath::TColor<Base> &c0, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c0);
+   rv /= c1;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator^(const TColor<Base> &c0, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c0);
-      rv ^= c1;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator/(const gmath::TColor<Base> &c0, float v)
+{
+   gmath::TColor<Base> rv(c0);
+   rv /= v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator^(const TColor<Base> &c0, float v)
-   {
-      TColor<Base> rv(c0);
-      rv ^= v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator/(float v, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c1);
+   rv /= v;
+   return rv;
+}
 
-   template <class Base>
-   TColor<Base> operator^(float v, const TColor<Base> &c1)
-   {
-      TColor<Base> rv(c1);
-      rv ^= v;
-      return rv;
-   }
+template <class Base>
+gmath::TColor<Base> operator^(const gmath::TColor<Base> &c0, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c0);
+   rv ^= c1;
+   return rv;
+}
 
-   template <class Base>
-   std::ostream& operator<<(std::ostream &os, const TColor<Base> &c)
+template <class Base>
+gmath::TColor<Base> operator^(const gmath::TColor<Base> &c0, float v)
+{
+   gmath::TColor<Base> rv(c0);
+   rv ^= v;
+   return rv;
+}
+
+template <class Base>
+gmath::TColor<Base> operator^(float v, const gmath::TColor<Base> &c1)
+{
+   gmath::TColor<Base> rv(c1);
+   rv ^= v;
+   return rv;
+}
+
+template <class Base>
+std::ostream& operator<<(std::ostream &os, const gmath::TColor<Base> &c)
+{
+   os << "[";
+   if (gmath::TColor<Base>::Dim > 0)
    {
-      os << "[";
-      if (TColor<Base>::Dim > 0)
+      os << c[0];
+      for (int i=1; i<gmath::TColor<Base>::Dim; ++i)
       {
-         os << c[0];
-         for (int i=1; i<TColor<Base>::Dim; ++i)
-         {
-            os << ", " << c[i];
-         }
+         os << ", " << c[i];
       }
-      os << "]";
-      return os;
    }
-
+   os << "]";
+   return os;
 }
 
 #endif
