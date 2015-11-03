@@ -254,7 +254,7 @@ namespace gmath
       NLT_Gamma22 = 0,
       NLT_Gamma24,
       NLT_sRGB,
-      NLT_rec709
+      NLT_Rec709
    };
 
    // Convert compressed color to linear color
@@ -273,6 +273,15 @@ namespace gmath
       Chromaticity(const Chromaticity &rhs);
 
       Chromaticity& operator=(const Chromaticity &rhs);
+
+      static const Chromaticity IllumA;
+      static const Chromaticity IllumB;
+      static const Chromaticity IllumC;
+      static const Chromaticity IllumD50;
+      static const Chromaticity IllumD55;
+      static const Chromaticity IllumD65;
+      static const Chromaticity IllumD75;
+      static const Chromaticity IllumE;
    };
 
    class ColorSpace
@@ -292,10 +301,7 @@ namespace gmath
 
    public:
 
-      //static const ColorSpace HDTV;
-      //static const ColorSpace NTSC;
-      //static const ColorSpace sRGB;
-      //...
+      static const ColorSpace Rec709;
 
    private:
       ColorSpace();
@@ -462,9 +468,9 @@ namespace gmath
       {
          self[i] += v;
       }
-      return *this; 
+      return *this;
    }
-   
+
    template <class Base>
    TColor<Base>& TColor<Base>::operator-=(const TColor<Base> &rhs)
    {
@@ -484,7 +490,7 @@ namespace gmath
       }
       return *this;
    }
-   
+
    template <class Base>
    TColor<Base>& TColor<Base>::operator*=(const TColor<Base> &rhs)
    {
@@ -504,7 +510,7 @@ namespace gmath
       }
       return *this;
    }
-   
+
    template <class Base>
    TColor<Base>& TColor<Base>::operator/=(const TColor<Base> &rhs)
    {
@@ -525,7 +531,7 @@ namespace gmath
       }
       return *this;
    }
-   
+
    template <class Base>
    TColor<Base>& TColor<Base>::operator^=(const TColor<Base> &rhs)
    {
@@ -568,7 +574,7 @@ namespace gmath
       }
       return rv;
    }
-   
+
    template <class Base>
    TColor<Base>& TColor<Base>::floor(const TColor<Base> &rhs)
    {

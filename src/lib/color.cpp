@@ -29,16 +29,16 @@ RGB Grade(const RGB &rgb, const RGB &black, const RGB &white, const RGB &lift, c
 {
    RGB wbdiff(white);
    wbdiff -= black;
-  
+
    RGB gldiff(gain);
    gldiff -= lift;
-  
+
    RGB rv(rgb);
    rv -= black;
    rv /= wbdiff;
    rv *= gldiff;
    rv += lift;
-   
+
    return rv;
 }
 
@@ -49,11 +49,11 @@ HSL RGBtoHSL(const RGB &rgb, float epsilon)
    float M = std::max(rgb.r, std::max(rgb.g, rgb.b));
    float m = std::min(rgb.r, std::min(rgb.g, rgb.b));
    float C = M - m;
-   
+
    hsl.h = 0;
    hsl.s = 0;
    hsl.l = 0.5 * (m + M);
-   
+
    if (C >= epsilon)
    {
       if (hsl.l <= 0.5)
@@ -64,7 +64,7 @@ HSL RGBtoHSL(const RGB &rgb, float epsilon)
       {
          hsl.s = C / (2 * (1 - hsl.l));
       }
-      
+
       if (M == rgb.r)
       {
          hsl.h = (rgb.g - rgb.b) / C;
@@ -77,11 +77,11 @@ HSL RGBtoHSL(const RGB &rgb, float epsilon)
       {
          hsl.h = (rgb.r - rgb.g) / C + 4;
       }
-      
+
       static float sNormalizeHue = 60.0 / 360.0;
-      
+
       hsl.h *= sNormalizeHue;
-      
+
       if (hsl.h < 0)
       {
          hsl.h += 1;
@@ -98,16 +98,16 @@ HSV RGBtoHSV(const RGB &rgb, float epsilon)
    float M = std::max(rgb.r, std::max(rgb.g, rgb.b));
    float m = std::min(rgb.r, std::min(rgb.g, rgb.b));
    float C = M - m;
-   
+
    hsv.h = 0;
    hsv.s = 0;
    hsv.v = M;
-   
+
    if (M >= epsilon)
    {
       hsv.s = C / M;
    }
-   
+
    if (hsv.s >= epsilon)
    {
       if (M == rgb.r)
@@ -122,11 +122,11 @@ HSV RGBtoHSV(const RGB &rgb, float epsilon)
       {
          hsv.h = (rgb.r - rgb.g) / C + 4;
       }
-      
+
       static float sNormalizeHue = 60.0 / 360.0;
-      
+
       hsv.h *= sNormalizeHue;
-      
+
       if (hsv.h < 0)
       {
          hsv.h += 1;
@@ -143,7 +143,7 @@ RGB HSVtoRGB(const HSV &hsv)
    float C = hsv.v * hsv.s;
    float h = hsv.h * 6;
    float X = C * (1 - fabs(fmod(h, 2) - 1));
-   
+
    if (h < 1)
    {
       rgb.r = C;
@@ -180,9 +180,9 @@ RGB HSVtoRGB(const HSV &hsv)
       rgb.g = 0;
       rgb.b = X;
    }
-   
+
    float m = hsv.v - C;
-   
+
    rgb.r += m;
    rgb.g += m;
    rgb.b += m;
@@ -195,7 +195,7 @@ RGB HSLtoRGB(const HSL &hsl)
    RGB rgb;
 
    float C;
-  
+
    if (hsl.l <= 0.5)
    {
       C = 2 * hsl.l * hsl.s;
@@ -204,10 +204,10 @@ RGB HSLtoRGB(const HSL &hsl)
    {
       C = (2 - 2 * hsl.l) * hsl.s;
    }
-  
+
    float h = hsl.h * 6;
    float X = C * (1 - fabs(fmod(h, 2) - 1));
-  
+
    if (h < 1)
    {
       rgb.r = C;
@@ -244,9 +244,9 @@ RGB HSLtoRGB(const HSL &hsl)
       rgb.g = 0;
       rgb.b = X;
    }
-   
+
    float m = hsl.l - 0.5 * C;
-   
+
    rgb.r += m;
    rgb.g += m;
    rgb.b += m;
@@ -282,6 +282,8 @@ RGB RGBAtoRGB(const RGBA &rgba, bool premult)
 RGB Expand(const RGB &c, NonLinearTransform nlt)
 {
    static float sRGBScale = 1.0f / 12.92f;
+   static float Rec709Scale = 1.0f / 4.5f;
+   static float Rec709Power = 1.0f / 0.45f;
 
    RGB rgb;
 
@@ -302,9 +304,12 @@ RGB Expand(const RGB &c, NonLinearTransform nlt)
       rgb.g = c.g <= 0.04045f ? c.g * sRGBScale : powf((c.g + 0.055f) / 1.055f, 2.4f);
       rgb.b = c.b <= 0.04045f ? c.b * sRGBScale : powf((c.b + 0.055f) / 1.055f, 2.4f);
       break;
-   case NLT_rec709:
-      // TODO
-      
+   case NLT_Rec709:
+      rgb.r = c.r < 0.081f ? c.r * Rec709Scale : powf((c.r + 0.099f) / 1.099f, Rec709Power);
+      rgb.g = c.g < 0.081f ? c.g * Rec709Scale : powf((c.g + 0.099f) / 1.099f, Rec709Power);
+      rgb.b = c.b < 0.081f ? c.b * Rec709Scale : powf((c.b + 0.099f) / 1.099f, Rec709Power);
+      break;
+
    default:
       rgb = c;
    }
@@ -336,14 +341,32 @@ RGB Compress(const RGB &c, NonLinearTransform nlt)
       rgb.g = c.g <= 0.0031308f ? 12.92f * c.g : 1.055f * powf(c.g, invGamma24) - 0.055f;
       rgb.b = c.b <= 0.0031308f ? 12.92f * c.b : 1.055f * powf(c.b, invGamma24) - 0.055f;
       break;
-   case NLT_rec709:
-      // TODO
+   case NLT_Rec709:
+      rgb.r = c.r < 0.018f ? 4.5f * c.r : 1.099f * powf(c.r, 0.45f) - 0.099f;
+      rgb.g = c.g < 0.018f ? 4.5f * c.g : 1.099f * powf(c.g, 0.45f) - 0.099f;
+      rgb.b = c.b < 0.018f ? 4.5f * c.b : 1.099f * powf(c.b, 0.45f) - 0.099f;
+      break;
+
    default:
       rgb = c;
    }
 
    return rgb;
 }
+
+const Chromaticity Chromaticity::IllumA(0.44757f, 0.40745f);
+const Chromaticity Chromaticity::IllumB(0.34842f, 0.35161f);
+const Chromaticity Chromaticity::IllumC(0.31006f, 0.31616f);
+const Chromaticity Chromaticity::IllumD50(0.34567f, 0.35850f);
+const Chromaticity Chromaticity::IllumD55(0.33242f, 0.34743f);
+const Chromaticity Chromaticity::IllumD65(0.31271f, 0.32902f);
+const Chromaticity Chromaticity::IllumD75(0.29902f, 0.31485f);
+const Chromaticity Chromaticity::IllumE(1.0f/3.0f, 1.0f/3.0f);
+
+const ColorSpace ColorSpace::Rec709(Chromaticity(0.64f, 0.33f),
+                                    Chromaticity(0.30f, 0.60f),
+                                    Chromaticity(0.15f, 0.06f),
+                                    Chromaticity::IllumD65);
 
 ColorSpace::ColorSpace(const Chromaticity &r,
                        const Chromaticity &g,
