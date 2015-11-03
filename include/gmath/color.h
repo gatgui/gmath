@@ -299,6 +299,9 @@ namespace gmath
       XYZ RGBtoXYZ(const RGB &rgb) const;
       RGB XYZtoRGB(const XYZ &xyz) const;
 
+      const Matrix3 getXYZtoRGBMatrix() const;
+      const Matrix3 getRGBtoXYZMatrix() const;
+
    public:
 
       static const ColorSpace Rec709;
@@ -333,6 +336,20 @@ namespace gmath
       y = rhs.y;
       return *this;
    }
+
+   // ---
+
+   const Matrix3 ColorSpace::getXYZtoRGBMatrix() const
+   {
+      return mXYZtoRGB;
+   }
+
+   const Matrix3 ColorSpace::getRGBtoXYZMatrix() const
+   {
+      return mRGBtoXYZ;
+   }
+
+   // ---
 
 // shortcut
 #define self (*this)
@@ -753,5 +770,7 @@ std::ostream& operator<<(std::ostream &os, const gmath::TColor<Base> &c)
    os << "]";
    return os;
 }
+
+GMATH_API std::ostream& operator<<(std::ostream &os, const gmath::ColorSpace &cs);
 
 #endif
