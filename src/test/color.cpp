@@ -24,9 +24,36 @@ USA.
 #include <gmath/color.h>
 #include <iostream>
 
+using namespace gmath;
+
 int main(int, char**)
 {
-   std::cout << gmath::ColorSpace::Rec709 << std::endl;
-   
+   std::cout << ColorSpace::Rec709 << std::endl;
+
+   RGB r, g, b, w;
+   r.r = 1.0f; r.g = 0.0f; r.b = 0.0f;
+   g.r = 0.0f; g.g = 1.0f; g.b = 0.0f;
+   b.r = 0.0f; b.g = 0.0f; b.b = 1.0f;
+   w.r = 1.0f; w.g = 1.0f; w.b = 1.0f;
+
+   XYZ rv;
+   Chromaticity c;
+
+   rv = ColorSpace::Rec709.RGBtoXYZ(r);
+   c = GetChromaticity(rv);
+   std::cout << r << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ")" << std::endl;
+
+   rv = ColorSpace::Rec709.RGBtoXYZ(g);
+   c = GetChromaticity(rv);
+   std::cout << g << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ")" << std::endl;
+
+   rv = ColorSpace::Rec709.RGBtoXYZ(b);
+   c = GetChromaticity(rv);
+   std::cout << b << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ")" << std::endl;
+
+   rv = ColorSpace::Rec709.RGBtoXYZ(w);
+   c = GetChromaticity(rv);
+   std::cout << w << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ")" << std::endl;
+
    return 0;
 }

@@ -284,10 +284,13 @@ namespace gmath
       static const Chromaticity IllumE;
    };
 
+   GMATH_API Chromaticity GetChromaticity(const XYZ &xyz);
+
    class ColorSpace
    {
    public:
-      ColorSpace(const Chromaticity &r,
+      ColorSpace(const char *name,
+                 const Chromaticity &r,
                  const Chromaticity &g,
                  const Chromaticity &b,
                  const Chromaticity &w);
@@ -299,8 +302,11 @@ namespace gmath
       XYZ RGBtoXYZ(const RGB &rgb) const;
       RGB XYZtoRGB(const XYZ &xyz) const;
 
-      const Matrix3 getXYZtoRGBMatrix() const;
-      const Matrix3 getRGBtoXYZMatrix() const;
+      const std::string& getName() const;
+      const Matrix3& getRGBtoXYZMatrix() const;
+      const Matrix3& getXYZtoRGBMatrix() const;
+      void getPrimaries(Chromaticity &r, Chromaticity &g, Chromaticity &b) const;
+      const Chromaticity getWhitePoint() const;
 
    public:
 
@@ -309,6 +315,11 @@ namespace gmath
    private:
       ColorSpace();
 
+      std::string mName;
+      Chromaticity mRed;
+      Chromaticity mGreen;
+      Chromaticity mBlue;
+      Chromaticity mWhite;
       Matrix3 mXYZtoRGB;
       Matrix3 mRGBtoXYZ;
    };
@@ -339,14 +350,31 @@ namespace gmath
 
    // ---
 
-   const Matrix3 ColorSpace::getXYZtoRGBMatrix() const
+   inline const std::string& ColorSpace::getName() const
+   {
+      return mName;
+   }
+
+   inline const Matrix3& ColorSpace::getXYZtoRGBMatrix() const
    {
       return mXYZtoRGB;
    }
 
-   const Matrix3 ColorSpace::getRGBtoXYZMatrix() const
+   inline const Matrix3& ColorSpace::getRGBtoXYZMatrix() const
    {
       return mRGBtoXYZ;
+   }
+
+   inline void ColorSpace::getPrimaries(Chromaticity &r, Chromaticity &g, Chromaticity &b) const
+   {
+      r = mRed;
+      g = mGreen;
+      b = mBlue;
+   }
+
+   inline const Chromaticity ColorSpace::getWhitePoint() const
+   {
+      return mWhite;
    }
 
    // ---

@@ -386,15 +386,28 @@ const Chromaticity Chromaticity::IllumD65(0.31271f, 0.32902f);
 const Chromaticity Chromaticity::IllumD75(0.29902f, 0.31485f);
 const Chromaticity Chromaticity::IllumE(1.0f/3.0f, 1.0f/3.0f);
 
-const ColorSpace ColorSpace::Rec709(Chromaticity(0.64f, 0.33f),
+Chromaticity GetChromaticity(const XYZ &xyz)
+{
+   float isum = 1.0f / (xyz.x + xyz.y + xyz.z);
+   return Chromaticity(xyz.x * isum, xyz.y * isum);
+}
+
+const ColorSpace ColorSpace::Rec709("Rec. 709",
+                                    Chromaticity(0.64f, 0.33f),
                                     Chromaticity(0.30f, 0.60f),
                                     Chromaticity(0.15f, 0.06f),
                                     Chromaticity::IllumD65);
 
-ColorSpace::ColorSpace(const Chromaticity &r,
+ColorSpace::ColorSpace(const char *name,
+                       const Chromaticity &r,
                        const Chromaticity &g,
                        const Chromaticity &b,
                        const Chromaticity &w)
+   : mName(name)
+   , mRed(r)
+   , mGreen(g)
+   , mBlue(b)
+   , mWhite(w)
 {
    Vector3 X(r.x, r.y, 1.0f - (r.x + r.y));
    Vector3 Y(g.x, g.y, 1.0f - (g.x + g.y));
@@ -417,7 +430,12 @@ ColorSpace::ColorSpace(const Chromaticity &r,
 }
 
 ColorSpace::ColorSpace(const ColorSpace &rhs)
-   : mXYZtoRGB(rhs.mXYZtoRGB)
+   : mName(rhs.mName)
+   , mRed(rhs.mRed)
+   , mGreen(rhs.mGreen)
+   , mBlue(rhs.mBlue)
+   , mWhite(rhs.mWhite)
+   , mXYZtoRGB(rhs.mXYZtoRGB)
    , mRGBtoXYZ(rhs.mRGBtoXYZ)
 {
 }
@@ -426,6 +444,11 @@ ColorSpace& ColorSpace::operator=(const ColorSpace &rhs)
 {
    if (this != &rhs)
    {
+      mName = rhs.mName;
+      mRed = rhs.mRed;
+      mGreen = rhs.mGreen;
+      mBlue = rhs.mBlue;
+      mWhite = rhs.mWhite;
       mXYZtoRGB = rhs.mXYZtoRGB;
       mRGBtoXYZ = rhs.mRGBtoXYZ;
    }
@@ -452,9 +475,20 @@ RGB ColorSpace::XYZtoRGB(const XYZ &xyz) const
 
 std::ostream& operator<<(std::ostream &os, const gmath::ColorSpace &cs)
 {
-   os << "XYZ -> RGB" << std::endl;
-   os << cs.getXYZtoRGBMatrix() << std::endl;
-   os << "RGB -> XYZ" << std::endl;
-   os << cs.getRGBtoXYZMatrix() << std::endl;
+   gmath::Chromaticity r, g, b, w;
+
+   cs.getPrimaries(r, g, b);
+   w = cs.getWhitePoint();
+
+   os << "ColorSpace \"" << cs.getName() << "\"" << std::endl;
+   os << "  Primaries" << std::endl;
+   os << "    Red: (" << r.x << ", " << r.y << ")" << std::endl;
+   os << "    Green: (" << g.x << ", " << g.y << ")" << std::endl;
+   os << "    Blue: (" << b.x << ", " << b.y << ")" << std::endl;
+   os << "  White point: (" << w.x << ", " << w.y << ")" << std::endl;
+   os << "  XYZ -> RGB" << std::endl;
+   os << "    " << cs.getXYZtoRGBMatrix() << std::endl;
+   os << "  RGB -> XYZ" << std::endl;
+   os << "    " << cs.getRGBtoXYZMatrix();
    return os;
 }
