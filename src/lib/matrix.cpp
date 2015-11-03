@@ -24,14 +24,14 @@ USA.
 #include <gmath/matrix.h>
 
 namespace gmath {
-  
+
   const Matrix3 Matrix3::ZERO = Matrix3(0,0,0, 0,0,0, 0,0,0);
   const Matrix3 Matrix3::IDENTITY = Matrix3(1,0,0, 0,1,0, 0,0,1);
-  
+
   Matrix3 Matrix3::MakeScale(const Vector3 &s) {
     return Matrix3(s.x,0,0, 0,s.y,0, 0,0,s.z);
   }
-  
+
   Matrix3 Matrix3::MakeRotate(float angle, const Vector3 &a) {
     Matrix3 m;
     angle = ToRadian(angle);
@@ -70,7 +70,7 @@ namespace gmath {
     mM[2][1] = 0.0f;
     mM[2][2] = 1.0f;
   }
-  
+
   Matrix3::Matrix3(const Matrix3 &rhs) {
     mM[0][0] = rhs(0,0);
     mM[0][1] = rhs(0,1);
@@ -82,7 +82,7 @@ namespace gmath {
     mM[2][1] = rhs(2,1);
     mM[2][2] = rhs(2,2);
   }
-  
+
   Matrix3::Matrix3(
     float m00, float m01, float m02,
     float m10, float m11, float m12,
@@ -98,7 +98,7 @@ namespace gmath {
     mM[2][1] = m21;
     mM[2][2] = m22;
   }
-  
+
   Matrix3::Matrix3(const Vector3 &c0, const Vector3 &c1, const Vector3 &c2) {
     mM[0][0] = c0.x;
     mM[0][1] = c1.x;
@@ -110,10 +110,10 @@ namespace gmath {
     mM[2][1] = c1.z;
     mM[2][2] = c2.z;
   }
-  
+
   Matrix3::~Matrix3() {
   }
-  
+
   Matrix3& Matrix3::operator=(const Matrix3 &rhs) {
     if (this != &rhs) {
       mM[0][0] = rhs(0,0);
@@ -128,7 +128,7 @@ namespace gmath {
     }
     return *this;
   }
-  
+
   Matrix3& Matrix3::operator*=(float s) {
     for (int i=0; i<3; ++i) {
       for (int j=0; j<3; ++j) {
@@ -137,15 +137,15 @@ namespace gmath {
     }
     return *this;
   }
-  
+
   Matrix3& Matrix3::operator/=(float s) {
     return operator*=(1.0f / s);
   }
-  
+
   Matrix3& Matrix3::operator*=(const Matrix3 &rhs) {
     return (*this = (*this * rhs));
   }
-  
+
   Matrix3& Matrix3::operator+=(const Matrix3 &rhs) {
     for (int i=0; i<3; ++i) {
       for (int j=0; j<3; ++j) {
@@ -154,7 +154,7 @@ namespace gmath {
     }
     return *this;
   }
-  
+
   Matrix3& Matrix3::operator-=(const Matrix3 &rhs) {
     for (int i=0; i<3; ++i) {
       for (int j=0; j<3; ++j) {
@@ -163,61 +163,61 @@ namespace gmath {
     }
     return *this;
   }
-  
+
   float& Matrix3::operator()(int i, int j) {
     return mM[i][j];
   }
-  
+
   float Matrix3::operator()(int i, int j) const {
     return mM[i][j];
   }
-  
+
   Vector3 Matrix3::getColumn(int i) const {
     return Vector3(mM[0][i], mM[1][i], mM[2][i]);
   }
-  
+
   Vector3 Matrix3::getRow(int i) const {
     return Vector3(mM[i][0], mM[i][1], mM[i][2]);
   }
-  
+
   void Matrix3::setColumn(int i, const Vector3 &col) {
     mM[0][i] = col.x;
     mM[1][i] = col.y;
     mM[2][i] = col.z;
   }
-  
+
   void Matrix3::setRow(int i, const Vector3 &row) {
     mM[i][0] = row.x;
     mM[i][1] = row.y;
     mM[i][2] = row.z;
   }
-  
+
   Matrix3& Matrix3::transpose() {
     return (*this = getTranspose());
   }
-  
+
   Matrix3 Matrix3::getTranspose() const {
     return Matrix3(
       mM[0][0], mM[1][0], mM[2][0],
       mM[0][1], mM[1][1], mM[2][1],
       mM[0][2], mM[1][2], mM[2][2]);
   }
-  
+
   Matrix3& Matrix3::inverse() {
     return (*this = getInverse());
   }
-  
+
   Matrix3 Matrix3::getInverse() const {
     return ((1.0f / determinant()) * getAdjoint());
   }
-  
+
   float Matrix3::determinant() const {
     return (
       mM[0][0] * (mM[1][1]*mM[2][2] - mM[2][1]*mM[1][2]) -
       mM[1][0] * (mM[0][1]*mM[2][2] - mM[2][1]*mM[0][2]) +
       mM[2][0] * (mM[0][1]*mM[1][2] - mM[1][1]*mM[0][2]));
   }
-  
+
   Matrix3 Matrix3::getAdjoint() const {
     return Matrix3(
        (mM[1][1]*mM[2][2] - mM[2][1]*mM[1][2]),
@@ -230,7 +230,7 @@ namespace gmath {
       -(mM[0][0]*mM[2][1] - mM[2][0]*mM[0][1]),
        (mM[0][0]*mM[1][1] - mM[1][0]*mM[0][1]));
   }
-  
+
   // ---
 
   const Matrix4 Matrix4::IDENTITY = Matrix4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
@@ -247,7 +247,7 @@ namespace gmath {
     Matrix4 t = MakeTranslate(-p);
     return (r * t);
   }
-  
+
   Matrix4 Matrix4::MakeLookIn(const Vector3 &pos, const Vector3 &dir, const Vector3 &up) {
     Vector3 x = dir.cross(up).normalize();
     Vector3 y = x.cross(dir).normalize();
@@ -265,7 +265,7 @@ namespace gmath {
     m(2,2) = s.z;
     return m;
   }
-  
+
   Matrix4 Matrix4::MakeTranslate(const Vector3 &t) {
     Matrix4 m;
     m(0,3) = t.x;
@@ -273,7 +273,7 @@ namespace gmath {
     m(2,3) = t.z;
     return m;
   }
-  
+
   Matrix4 Matrix4::MakeRotate(float angle, const Vector3 &a) {
     Matrix4 m;
     angle = ToRadian(angle);
@@ -300,7 +300,7 @@ namespace gmath {
     m(2,2) = z2 + (1 - z2) * ct;
     return m;
   }
-  
+
   Matrix4 Matrix4::MakeFrustum(float l, float r, float b, float t, float n, float f) {
     Matrix4 m = Matrix4::ZERO;
     float iw = 1.0f / (r - l);
@@ -316,7 +316,7 @@ namespace gmath {
     m(3,2) = -1;
     return m;
   }
-  
+
   Matrix4 Matrix4::MakeOrtho(float l, float r, float b, float t, float n, float f) {
     Matrix4 m;
     float iw = 1.0f / (r - l);
@@ -331,7 +331,7 @@ namespace gmath {
     m(2,3) = - (f + n) * id;
     return m;
   }
-  
+
   Matrix4 Matrix4::MakePerspective(float fovy, float aspect, float n, float f) {
     Matrix4 m = Matrix4::ZERO;
     float chf = Cotand(0.5f * fovy);
@@ -413,14 +413,14 @@ namespace gmath {
     }
     return *this;
   }
-  
+
   Matrix4& Matrix4::operator+=(const Matrix4 &rhs) {
     for (int i=0; i<16; ++i) {
       mM[i] += rhs.mM[i];
     }
     return *this;
   }
-  
+
   Matrix4& Matrix4::operator-=(const Matrix4 &rhs) {
     for (int i=0; i<16; ++i) {
       mM[i] -= rhs.mM[i];
@@ -452,7 +452,7 @@ namespace gmath {
     r[15] = mM[15];
     return r;
   }
-  
+
   inline static float Minor(
     const Matrix4& m,
     int i00, int i01, int i02,
@@ -463,10 +463,10 @@ namespace gmath {
            m[i01] * ( m[i10] * m[i22] - m[i20] * m[i12] ) +
            m[i02] * ( m[i10] * m[i21] - m[i20] * m[i11] );
   }
-  
+
   Matrix4 Matrix4::getAdjoint() const {
     return Matrix4(
-    
+
        Minor(*this, 5,9,13, 6,10,14, 7,11,15),
       -Minor(*this, 4,8,12, 6,10,14, 7,11,15),
        Minor(*this, 4,8,12, 5,9,13,  7,11,15),
@@ -485,24 +485,24 @@ namespace gmath {
       -Minor(*this, 1,5,9, 2,6,10, 3,7,11),
        Minor(*this, 0,4,8, 2,6,10, 3,7,11),
       -Minor(*this, 0,4,8, 1,5,9,  3,7,11),
-       Minor(*this, 0,4,8, 1,5,9,  2,6,10));   
+       Minor(*this, 0,4,8, 1,5,9,  2,6,10));
   }
-  
+
   float Matrix4::determinant() const {
     return mM[0]  * Minor(*this, 5,9,13, 6,10,14, 7,11,15) -
            mM[4]  * Minor(*this, 1,9,13, 2,10,14, 3,11,15) +
            mM[8]  * Minor(*this, 1,5,13, 2,6,13,  3,7,15) -
            mM[12] * Minor(*this, 1,5,9,  2,6,10,  3,7,11);
   }
-  
+
   Matrix4& Matrix4::inverse() {
     return (*this = getInverse());
   }
-  
+
   Matrix4 Matrix4::getInverse() const {
-    
+
     //return ((1.0f / determinant()) * getAdjoint());
-    
+
     float m00 =  Minor(*this, 5,9,13, 6,10,14, 7,11,15);
     float m01 = -Minor(*this, 4,8,12, 6,10,14, 7,11,15);
     float m02 =  Minor(*this, 4,8,12, 5,9,13,  7,11,15);
@@ -522,9 +522,9 @@ namespace gmath {
     float m31 =  Minor(*this, 0,4,8, 2,6,10, 3,7,11);
     float m32 = -Minor(*this, 0,4,8, 1,5,9,  3,7,11);
     float m33 =  Minor(*this, 0,4,8, 1,5,9,  2,6,10);
-    
+
     float idet = 1.0f / (mM[0]*m00 - mM[4]*m10 + mM[8]*m20 - mM[12]*m30);
-    
+
     return Matrix4(
       idet*m00, idet*m01, idet*m02, idet*m03,
       idet*m10, idet*m11, idet*m12, idet*m13,
@@ -622,7 +622,13 @@ gmath::Matrix3 operator/(const gmath::Matrix3 &m0, float s) {
   return (tmp /= s);
 }
 
-std::ostream& operator<<(std::ostream &os, const gmath::Matrix3 &m);
+std::ostream& operator<<(std::ostream &os, const gmath::Matrix3 &m) {
+  os << "Matrix3{";
+  os << "{" << m(0,0) << ", " << m(0,1) << ", " << m(0,2) << "}, ";
+  os << "{" << m(1,0) << ", " << m(1,1) << ", " << m(1,2) << "}, ";
+  os << "{" << m(2,0) << ", " << m(2,1) << ", " << m(2,2) << "}}";
+  return os;
+}
 
 // ---
 
@@ -714,4 +720,3 @@ std::ostream& operator<<(std::ostream &os, const gmath::Matrix4 &m) {
   os << "{" << m[3] << ", " << m[7] << ", " << m[11] << ", " << m[15] << "}}";
   return os;
 }
-
