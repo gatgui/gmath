@@ -302,7 +302,7 @@ RGB RGBAtoRGB(const RGBA &rgba, bool premult)
    return rgb;
 }
 
-RGB Expand(const RGB &c, NonLinearTransform nlt)
+RGB Linearize(const RGB &c, NonLinearTransform nlt)
 {
    static float sRGBScale = 1.0f / 12.92f;
    static float Rec709Scale = 1.0f / 4.5f;
@@ -340,7 +340,7 @@ RGB Expand(const RGB &c, NonLinearTransform nlt)
    return rgb;
 }
 
-RGB Compress(const RGB &c, NonLinearTransform nlt)
+RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
 {
    static float invGamma22 = 1.0f / 2.2f;
    static float invGamma24 = 1.0f / 2.4f;
@@ -390,6 +390,19 @@ Chromaticity GetChromaticity(const XYZ &xyz)
 {
    float isum = 1.0f / (xyz.x + xyz.y + xyz.z);
    return Chromaticity(xyz.x * isum, xyz.y * isum);
+}
+
+XYZ GetXYZ(const Chromaticity &c, float Y)
+{
+   XYZ rv;
+
+   float iy = 1.0f / c.y;
+
+   rv.x = Y * iy * c.x;
+   rv.y = Y;
+   rv.z = Y * iy * (1.0f - c.x - c.y);
+
+   return rv;
 }
 
 const ColorSpace ColorSpace::Rec709("Rec. 709",

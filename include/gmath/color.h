@@ -233,6 +233,34 @@ namespace gmath
    typedef TColor<details::HSL> HSL;
    typedef TColor<details::XYZ> XYZ;
 
+   inline RGB RGBCreate(float r, float g, float b)
+   {
+      RGB rv;
+      rv.r = r;
+      rv.g = g;
+      rv.b = b;
+      return rv;
+   }
+
+   inline RGBA RGBACreate(float r, float g, float b, float a=1.0f)
+   {
+      RGBA rv;
+      rv.r = r;
+      rv.g = g;
+      rv.b = b;
+      rv.a = a;
+      return rv;
+   }
+
+   inline XYZ XYZCreate(float x, float y, float z)
+   {
+      XYZ rv;
+      rv.x = x;
+      rv.y = y;
+      rv.z = z;
+      return rv;
+   }
+
    // Other functions here
 
    GMATH_API RGB HSLtoRGB(const HSL &hsl);
@@ -257,13 +285,10 @@ namespace gmath
       NLT_Rec709
    };
 
-   // Convert compressed color to linear color
-   GMATH_API RGB Expand(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
+   GMATH_API RGB Linearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
+   GMATH_API RGB Unlinearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
 
-   // Convert linear color to compressed color
-   GMATH_API RGB Compress(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
-
-   struct Chromaticity
+   struct GMATH_API Chromaticity
    {
       float x;
       float y;
@@ -285,8 +310,9 @@ namespace gmath
    };
 
    GMATH_API Chromaticity GetChromaticity(const XYZ &xyz);
+   GMATH_API XYZ GetXYZ(const Chromaticity &c, float Y);
 
-   class ColorSpace
+   class GMATH_API ColorSpace
    {
    public:
       ColorSpace(const char *name,
