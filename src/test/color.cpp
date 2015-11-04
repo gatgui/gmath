@@ -28,36 +28,53 @@ using namespace gmath;
 
 int main(int, char**)
 {
-   std::cout << ColorSpace::Rec709 << std::endl;
+   const ColorSpace* csl[] =
+   {
+      &ColorSpace::Rec709,
+      &ColorSpace::NTSC,
+      &ColorSpace::SMPTE,
+      &ColorSpace::CIE,
+      &ColorSpace::UHDTV,
+      &ColorSpace::DCIP3
+   };
 
-   RGB r = RGBCreate(1.0f, 0.0f, 0.0f);
-   RGB g = RGBCreate(0.0f, 1.0f, 0.0f);
-   RGB b = RGBCreate(0.0f, 0.0f, 1.0f);
-   RGB w = RGBCreate(1.0f, 1.0f, 1.0f);
+   size_t ncs = sizeof(csl) / sizeof(const ColorSpace*);
 
-   XYZ rv;
-   RGB rv2;
-   Chromaticity c;
+   for (size_t i=0; i<ncs; ++i)
+   {
+      const ColorSpace &cs = *(csl[i]);
 
-   rv = ColorSpace::Rec709.RGBtoXYZ(r);
-   rv2 = ColorSpace::Rec709.XYZtoRGB(rv);
-   c = GetChromaticity(rv);
-   std::cout << r << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+      std::cout << cs << std::endl;
 
-   rv = ColorSpace::Rec709.RGBtoXYZ(g);
-   rv2 = ColorSpace::Rec709.XYZtoRGB(rv);
-   c = GetChromaticity(rv);
-   std::cout << g << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+      RGB r = RGBCreate(1.0f, 0.0f, 0.0f);
+      RGB g = RGBCreate(0.0f, 1.0f, 0.0f);
+      RGB b = RGBCreate(0.0f, 0.0f, 1.0f);
+      RGB w = RGBCreate(1.0f, 1.0f, 1.0f);
 
-   rv = ColorSpace::Rec709.RGBtoXYZ(b);
-   rv2 = ColorSpace::Rec709.XYZtoRGB(rv);
-   c = GetChromaticity(rv);
-   std::cout << b << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+      XYZ rv;
+      RGB rv2;
+      Chromaticity c;
 
-   rv = ColorSpace::Rec709.RGBtoXYZ(w);
-   rv2 = ColorSpace::Rec709.XYZtoRGB(rv);
-   c = GetChromaticity(rv);
-   std::cout << w << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+      rv = cs.RGBtoXYZ(r);
+      rv2 = cs.XYZtoRGB(rv);
+      c = GetChromaticity(rv);
+      std::cout << r << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+
+      rv = cs.RGBtoXYZ(g);
+      rv2 = cs.XYZtoRGB(rv);
+      c = GetChromaticity(rv);
+      std::cout << g << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+
+      rv = cs.RGBtoXYZ(b);
+      rv2 = cs.XYZtoRGB(rv);
+      c = GetChromaticity(rv);
+      std::cout << b << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+
+      rv = cs.RGBtoXYZ(w);
+      rv2 = cs.XYZtoRGB(rv);
+      c = GetChromaticity(rv);
+      std::cout << w << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
+   }
 
    return 0;
 }

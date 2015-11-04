@@ -337,6 +337,11 @@ namespace gmath
    public:
 
       static const ColorSpace Rec709;
+      static const ColorSpace NTSC;
+      static const ColorSpace SMPTE;
+      static const ColorSpace CIE;
+      static const ColorSpace UHDTV;
+      static const ColorSpace DCIP3;
 
    private:
       ColorSpace();

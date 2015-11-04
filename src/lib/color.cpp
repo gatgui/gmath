@@ -323,11 +323,13 @@ RGB Linearize(const RGB &c, NonLinearTransform nlt)
       rgb.b = powf(c.b, 2.4f);
       break;
    case NLT_sRGB:
+      // https://en.wikipedia.org/wiki/SRGB
       rgb.r = c.r <= 0.04045f ? c.r * sRGBScale : powf((c.r + 0.055f) / 1.055f, 2.4f);
       rgb.g = c.g <= 0.04045f ? c.g * sRGBScale : powf((c.g + 0.055f) / 1.055f, 2.4f);
       rgb.b = c.b <= 0.04045f ? c.b * sRGBScale : powf((c.b + 0.055f) / 1.055f, 2.4f);
       break;
    case NLT_Rec709:
+      // https://en.wikipedia.org/wiki/Rec._709
       rgb.r = c.r < 0.081f ? c.r * Rec709Scale : powf((c.r + 0.099f) / 1.099f, Rec709Power);
       rgb.g = c.g < 0.081f ? c.g * Rec709Scale : powf((c.g + 0.099f) / 1.099f, Rec709Power);
       rgb.b = c.b < 0.081f ? c.b * Rec709Scale : powf((c.b + 0.099f) / 1.099f, Rec709Power);
@@ -360,11 +362,13 @@ RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
       rgb.b = powf(c.b, invGamma24);
       break;
    case NLT_sRGB:
+      // https://en.wikipedia.org/wiki/SRGB
       rgb.r = c.r <= 0.0031308f ? 12.92f * c.r : 1.055f * powf(c.r, invGamma24) - 0.055f;
       rgb.g = c.g <= 0.0031308f ? 12.92f * c.g : 1.055f * powf(c.g, invGamma24) - 0.055f;
       rgb.b = c.b <= 0.0031308f ? 12.92f * c.b : 1.055f * powf(c.b, invGamma24) - 0.055f;
       break;
    case NLT_Rec709:
+      // https://en.wikipedia.org/wiki/Rec._709
       rgb.r = c.r < 0.018f ? 4.5f * c.r : 1.099f * powf(c.r, 0.45f) - 0.099f;
       rgb.g = c.g < 0.018f ? 4.5f * c.g : 1.099f * powf(c.g, 0.45f) - 0.099f;
       rgb.b = c.b < 0.018f ? 4.5f * c.b : 1.099f * powf(c.b, 0.45f) - 0.099f;
@@ -377,6 +381,7 @@ RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
    return rgb;
 }
 
+// https://en.wikipedia.org/wiki/Standard_illuminant
 const Chromaticity Chromaticity::IllumA(0.44757f, 0.40745f);
 const Chromaticity Chromaticity::IllumB(0.34842f, 0.35161f);
 const Chromaticity Chromaticity::IllumC(0.31006f, 0.31616f);
@@ -405,11 +410,43 @@ XYZ GetXYZ(const Chromaticity &c, float Y)
    return rv;
 }
 
+
+// https://en.wikipedia.org/wiki/Rec._709
 const ColorSpace ColorSpace::Rec709("Rec. 709",
                                     Chromaticity(0.64f, 0.33f),
                                     Chromaticity(0.30f, 0.60f),
                                     Chromaticity(0.15f, 0.06f),
                                     Chromaticity::IllumD65);
+// https://en.wikipedia.org/wiki/NTSC#SMPTE_C
+const ColorSpace ColorSpace::NTSC("NTSC 1953",
+                                  Chromaticity(0.67f, 0.33f),
+                                  Chromaticity(0.21f, 0.71f),
+                                  Chromaticity(0.14f, 0.08f),
+                                  Chromaticity::IllumC);
+const ColorSpace ColorSpace::SMPTE("SMPTE C",
+                                   Chromaticity(0.63f, 0.34f),
+                                   Chromaticity(0.31f, 0.595f),
+                                   Chromaticity(0.155f, 0.07f),
+                                   Chromaticity::IllumD65);
+// https://en.wikipedia.org/wiki/RGB_color_space
+// http://www.brucelindbloom.com/index.html?WorkingSpaceInfo.html
+// http://linuxtv.org/downloads/v4l-dvb-apis/ch02s06.html
+// http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
+const ColorSpace ColorSpace::CIE("CIE RGB",
+                                 Chromaticity(0.7347f, 0.2653f),
+                                 Chromaticity(0.2738f, 0.7174f),
+                                 Chromaticity(0.1666f, 0.0089f),
+                                 Chromaticity::IllumE);
+const ColorSpace ColorSpace::UHDTV("UHDTV",
+                                   Chromaticity(0.708f, 0.292f),
+                                   Chromaticity(0.17f, 0.797f),
+                                   Chromaticity(0.131f, 0.046f),
+                                   Chromaticity::IllumD65);
+const ColorSpace ColorSpace::DCIP3("DCI-P3",
+                                   Chromaticity(0.68f, 0.32f),
+                                   Chromaticity(0.265f, 0.69f),
+                                   Chromaticity(0.15f, 0.06f),
+                                   Chromaticity(0.314f, 0.351f));
 
 ColorSpace::ColorSpace(const char *name,
                        const Chromaticity &r,
