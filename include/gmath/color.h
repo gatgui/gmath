@@ -287,6 +287,30 @@ namespace gmath
    GMATH_API Chromaticity GetChromaticity(const XYZ &xyz);
    GMATH_API XYZ GetXYZ(const Chromaticity &c, float Y);
 
+   GMATH_API extern const float SpectrumMin;
+   GMATH_API extern const float SpectrumMax;
+   GMATH_API extern const float SpectrumStep;
+   GMATH_API extern const float CIEStdObs1931[81][3];
+
+   template <class SpectralPowerDensityFunc>
+   XYZ IntegrateSpectrum(const SpectralPowerDensityFunc &spd)
+   {
+      XYZ rv;
+      float lambda = SpectrumMin;
+
+      for (int i=0; i<81; ++i, lambda+=SpectrumStep)
+      {
+         float p = spd(lambda);
+         rv.x += p * CIEStdObs1931[i][0];
+         rv.y += p * CIEStdObs1931[i][1];
+         rv.z += p * CIEStdObs1931[i][2];
+      }
+
+      rv /= (rv.x + rv.y + rv.z);
+
+      return rv;
+   }
+
    class GMATH_API ColorSpace
    {
    public:
