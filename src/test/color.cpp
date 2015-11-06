@@ -46,10 +46,10 @@ int main(int, char**)
 
       std::cout << cs << std::endl;
 
-      RGB r = RGBCreate(1.0f, 0.0f, 0.0f);
-      RGB g = RGBCreate(0.0f, 1.0f, 0.0f);
-      RGB b = RGBCreate(0.0f, 0.0f, 1.0f);
-      RGB w = RGBCreate(1.0f, 1.0f, 1.0f);
+      RGB r = RGB(1.0f, 0.0f, 0.0f);
+      RGB g = RGB(0.0f, 1.0f, 0.0f);
+      RGB b = RGB(0.0f, 0.0f, 1.0f);
+      RGB w = RGB(1.0f, 1.0f, 1.0f);
 
       XYZ rv;
       RGB rv2;

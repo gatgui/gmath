@@ -192,7 +192,10 @@ namespace gmath
    public:
 
       TColor();
-      TColor(float v);
+      TColor(float v1);
+      TColor(float v1, float v2);
+      TColor(float v1, float v2, float v3);
+      TColor(float v1, float v2, float v3, float v4);
       TColor(const float *v);
       TColor(const TColor<Base> &rhs);
       ~TColor();
@@ -232,34 +235,6 @@ namespace gmath
    typedef TColor<details::HSV> HSV;
    typedef TColor<details::HSL> HSL;
    typedef TColor<details::XYZ> XYZ;
-
-   inline RGB RGBCreate(float r, float g, float b)
-   {
-      RGB rv;
-      rv.r = r;
-      rv.g = g;
-      rv.b = b;
-      return rv;
-   }
-
-   inline RGBA RGBACreate(float r, float g, float b, float a=1.0f)
-   {
-      RGBA rv;
-      rv.r = r;
-      rv.g = g;
-      rv.b = b;
-      rv.a = a;
-      return rv;
-   }
-
-   inline XYZ XYZCreate(float x, float y, float z)
-   {
-      XYZ rv;
-      rv.x = x;
-      rv.y = y;
-      rv.z = z;
-      return rv;
-   }
 
    // Other functions here
 
@@ -420,9 +395,60 @@ namespace gmath
    }
 
    template <class Base>
-   TColor<Base>::TColor(float v)
-      : Base(v)
+   TColor<Base>::TColor(float v1)
+      : Base(v1)
    {
+   }
+
+   template <class Base>
+   TColor<Base>::TColor(float v1, float v2)
+      : Base()
+   {
+      switch (Base::Dim > 2 ? 2 : Base::Dim)
+      {
+      case 2:
+         self[1] = v2;
+      case 1:
+         self[0] = v1;
+      default:
+         break;
+      }
+   }
+
+   template <class Base>
+   TColor<Base>::TColor(float v1, float v2, float v3)
+      : Base()
+   {
+      switch (Base::Dim > 3 ? 3 : Base::Dim)
+      {
+      case 3:
+         self[2] = v3;
+      case 2:
+         self[1] = v2;
+      case 1:
+         self[0] = v1;
+      default:
+         break;
+      }
+   }
+
+   template <class Base>
+   TColor<Base>::TColor(float v1, float v2, float v3, float v4)
+      : Base()
+   {
+      switch (Base::Dim > 4 ? 4 : Base::Dim)
+      {
+      case 4:
+         self[3] = v4;
+      case 3:
+         self[2] = v3;
+      case 2:
+         self[1] = v2;
+      case 1:
+         self[0] = v1;
+      default:
+         break;
+      }
    }
 
    template <class Base>
