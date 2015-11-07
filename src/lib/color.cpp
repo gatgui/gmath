@@ -26,11 +26,10 @@ USA.
 namespace gmath
 {
 
-const float SpectrumMin = 380.0f;
-const float SpectrumMax = 780.0f;
-const float SpectrumStep = 5.0f;
-
-const float CIEStdObs1931[81][3] = {
+const float Constants::MinVisibleWavelength = 380.0f;
+const float Constants::MaxVisibleWavelength = 780.0f;
+const float Constants::WavelengthStep = 5.0f;
+const float Constants::CIEStdObs1931[81][3] = {
   {0.001368f, 0.000039f, 0.006450f},
   {0.002236f, 0.000064f, 0.010550f},
   {0.004243f, 0.000120f, 0.020050f},
@@ -113,6 +112,9 @@ const float CIEStdObs1931[81][3] = {
   {0.000059f, 0.000021f, 0.000000f},
   {0.000042f, 0.000015f, 0.000000f}
 };
+const double Constants::SpeedOfLight = 2.99792458e8;
+const double Constants::Planck = 6.62607004e-34;
+const double Constants::Boltzmann = 1.3806485279e-23;
 
 float Chroma(const RGB &rgb)
 {
@@ -469,6 +471,7 @@ RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
    return rgb;
 }
 
+
 // https://en.wikipedia.org/wiki/Standard_illuminant
 const Chromaticity Chromaticity::IllumA(0.44757f, 0.40745f);
 const Chromaticity Chromaticity::IllumB(0.34842f, 0.35161f);
@@ -607,6 +610,87 @@ XYZ ColorSpace::RGBtoXYZ(const RGB &rgb) const
 RGB ColorSpace::XYZtoRGB(const XYZ &xyz) const
 {
    return RGB(mXYZtoRGB * Vector3(xyz));
+}
+
+
+Blackbody::Blackbody(float t)
+   : temperature(t)
+{
+}
+
+float Blackbody::operator()(float lambda) const
+{
+   // https://en.wikipedia.org/wiki/Planck%27s_law
+   static double c1 = 2 * M_PI * Constants::Planck * Constants::SpeedOfLight * Constants::SpeedOfLight;
+   static double c2 = Constants::Planck * Constants::SpeedOfLight / Constants::Boltzmann;
+
+   // c1 = 3.746914726083474e-16
+   // c2 = 1.4387773455951101e-2
+
+   double l = double(lambda) * 1e-9;
+
+   return float(c1 * pow(l, -5) / (exp(c2 / (l * temperature)) - 1));
+}
+
+class BlackbodyColorCache
+{
+public:
+   BlackbodyColorCache(int maxTemp=20000)
+   {
+      mCount = maxTemp + 1;
+      mValues = new XYZ[mCount];
+
+      for (int i=0; i<mCount; ++i)
+      {
+         Blackbody bb(i);
+         mValues[i] = IntegrateVisibleSpectrum(bb);
+      }
+   }
+
+   ~BlackbodyColorCache()
+   {
+      if (mValues)
+      {
+         delete[] mValues;
+      }
+   }
+
+   XYZ operator()(float temp)
+   {
+      int idx = int(temp);
+      if (idx < 0 || idx >= mCount)
+      {
+         // value not cached, compute it
+         Blackbody bb(temp);
+         return IntegrateVisibleSpectrum(bb);
+      }
+      else
+      {
+         return mValues[idx];
+      }
+   }
+
+private:
+
+   int mCount;
+   XYZ *mValues;
+};
+
+static BlackbodyColorCache BCC;
+
+XYZ Blackbody::GetXYZ(float temp)
+{
+   return BCC(temp);
+}
+
+Chromaticity Blackbody::GetChromaticity(float temp)
+{
+   return gmath::GetChromaticity(BCC(temp));
+}
+
+RGB Blackbody::GetRGB(float temp, const ColorSpace &cs)
+{
+   return cs.XYZtoRGB(BCC(temp)).ceil(0.0f);
 }
 
 } // namespace gmath

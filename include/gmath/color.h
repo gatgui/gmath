@@ -287,23 +287,30 @@ namespace gmath
    GMATH_API Chromaticity GetChromaticity(const XYZ &xyz);
    GMATH_API XYZ GetXYZ(const Chromaticity &c, float Y);
 
-   GMATH_API extern const float SpectrumMin;
-   GMATH_API extern const float SpectrumMax;
-   GMATH_API extern const float SpectrumStep;
-   GMATH_API extern const float CIEStdObs1931[81][3];
+   class GMATH_API Constants
+   {
+   public:
+      static const float MinVisibleWavelength; // nm
+      static const float MaxVisibleWavelength; // nm
+      static const float WavelengthStep; // nm
+      static const float CIEStdObs1931[81][3];
+      static const double SpeedOfLight; // m/s
+      static const double Planck; // Js
+      static const double Boltzmann; // J/K
+   };
 
    template <class SpectralPowerDensityFunc>
-   XYZ IntegrateSpectrum(const SpectralPowerDensityFunc &spd)
+   XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd)
    {
       XYZ rv;
-      float lambda = SpectrumMin;
+      float lambda = Constants::MinVisibleWavelength;
 
-      for (int i=0; i<81; ++i, lambda+=SpectrumStep)
+      for (int i=0; i<81; ++i, lambda+=Constants::WavelengthStep)
       {
          float p = spd(lambda);
-         rv.x += p * CIEStdObs1931[i][0];
-         rv.y += p * CIEStdObs1931[i][1];
-         rv.z += p * CIEStdObs1931[i][2];
+         rv.x += p * Constants::CIEStdObs1931[i][0];
+         rv.y += p * Constants::CIEStdObs1931[i][1];
+         rv.z += p * Constants::CIEStdObs1931[i][2];
       }
 
       rv /= (rv.x + rv.y + rv.z);
@@ -352,6 +359,23 @@ namespace gmath
       Chromaticity mWhite;
       Matrix3 mXYZtoRGB;
       Matrix3 mRGBtoXYZ;
+   };
+
+   class GMATH_API Blackbody
+   {
+   public:
+      Blackbody(float temperature);
+
+      float operator()(float lambda) const;
+
+      float temperature;
+
+      static Chromaticity GetChromaticity(float temp);
+      static XYZ GetXYZ(float temp);
+      static RGB GetRGB(float temp, const ColorSpace &cs);
+
+   private:
+      Blackbody();
    };
 
    // ---
