@@ -891,7 +891,7 @@ gmath::TColor<Base> operator^(float v, const gmath::TColor<Base> &c1)
 template <class Base>
 std::ostream& operator<<(std::ostream &os, const gmath::TColor<Base> &c)
 {
-   os << "[";
+   os << "(";
    if (gmath::TColor<Base>::Dim > 0)
    {
       os << c[0];
@@ -900,7 +900,7 @@ std::ostream& operator<<(std::ostream &os, const gmath::TColor<Base> &c)
          os << ", " << c[i];
       }
    }
-   os << "]";
+   os << ")";
    return os;
 }
 

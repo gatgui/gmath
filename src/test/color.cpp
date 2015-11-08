@@ -28,7 +28,7 @@ using namespace gmath;
 
 std::ostream& operator<<(std::ostream &os, const Chromaticity &c)
 {
-   os << c.x << ", " << c.y;
+   os << "(" << c.x << ", " << c.y << ")";
    return os;
 }
 
@@ -82,11 +82,10 @@ int main(int, char**)
       std::cout << w << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
    }
 
-   std::cout << "Color temperature 1000K = " << Blackbody::GetRGB(1000, ColorSpace::Rec709) << " (" << Blackbody::GetChromaticity(1000) << ")" << std::endl;
-   std::cout << "Color temperature 2000K = " << Blackbody::GetRGB(2000, ColorSpace::Rec709) << " (" << Blackbody::GetChromaticity(2000) << ")" << std::endl;
-   std::cout << "Color temperature 3000K = " << Blackbody::GetRGB(3000, ColorSpace::Rec709) << " (" << Blackbody::GetChromaticity(3000) << ")" << std::endl;
-   std::cout << "Color temperature 4000K = " << Blackbody::GetRGB(4000, ColorSpace::Rec709) << " (" << Blackbody::GetChromaticity(4000) << ")" << std::endl;
-   std::cout << "Color temperature 5000K = " << Blackbody::GetRGB(5000, ColorSpace::Rec709) << " (" << Blackbody::GetChromaticity(5000) << ")" << std::endl;
+   for (float temp=1000.0f; temp<=5000.0f; temp+=1000.0f)
+   {
+      std::cout << "Color temperature " << temp << " = xyz=" << Blackbody::GetXYZ(temp) << ", rgb=" << Blackbody::GetRGB(temp, ColorSpace::Rec709) << ", chromaticity=" << Blackbody::GetChromaticity(temp) << std::endl;
+   }
 
    return 0;
 }
