@@ -112,6 +112,89 @@ const float Constants::CIEStdObs1931[81][3] = {
   {0.000059f, 0.000021f, 0.000000f},
   {0.000042f, 0.000015f, 0.000000f}
 };
+const float Constants::CIEStdObs1964[81][3] = {
+  {0.000160f, 0.000017f, 0.000705f},
+  {0.000662f, 0.000072f, 0.002928f},
+  {0.002362f, 0.000253f, 0.010482f},
+  {0.007242f, 0.000769f, 0.032344f},
+  {0.019110f, 0.002004f, 0.086011f},
+  {0.043400f, 0.004509f, 0.197120f},
+  {0.084736f, 0.008756f, 0.389366f},
+  {0.140638f, 0.014456f, 0.656760f},
+  {0.204492f, 0.021391f, 0.972542f},
+  {0.264737f, 0.029497f, 1.282500f},
+  {0.314679f, 0.038676f, 1.553480f},
+  {0.357719f, 0.049602f, 1.798500f},
+  {0.383734f, 0.062077f, 1.967280f},
+  {0.386726f, 0.074704f, 2.027300f},
+  {0.370702f, 0.089456f, 1.994800f},
+  {0.342957f, 0.106256f, 1.900700f},
+  {0.302273f, 0.128201f, 1.745370f},
+  {0.254085f, 0.152761f, 1.554900f},
+  {0.195618f, 0.185190f, 1.317560f},
+  {0.132349f, 0.219940f, 1.030200f},
+  {0.080507f, 0.253589f, 0.772125f},
+  {0.041072f, 0.297665f, 0.570060f},
+  {0.016172f, 0.339133f, 0.415254f},
+  {0.005132f, 0.395379f, 0.302356f},
+  {0.003816f, 0.460777f, 0.218502f},
+  {0.015444f, 0.531360f, 0.159249f},
+  {0.037465f, 0.606741f, 0.112044f},
+  {0.071358f, 0.685660f, 0.082248f},
+  {0.117749f, 0.761757f, 0.060709f},
+  {0.172953f, 0.823330f, 0.043050f},
+  {0.236491f, 0.875211f, 0.030451f},
+  {0.304213f, 0.923810f, 0.020584f},
+  {0.376772f, 0.961988f, 0.013676f},
+  {0.451584f, 0.982200f, 0.007918f},
+  {0.529826f, 0.991761f, 0.003988f},
+  {0.616053f, 0.999110f, 0.001091f},
+  {0.705224f, 0.997340f, 0.000000f},
+  {0.793832f, 0.982380f, 0.000000f},
+  {0.878655f, 0.955552f, 0.000000f},
+  {0.951162f, 0.915175f, 0.000000f},
+  {1.014160f, 0.868934f, 0.000000f},
+  {1.074300f, 0.825623f, 0.000000f},
+  {1.118520f, 0.777405f, 0.000000f},
+  {1.134300f, 0.720353f, 0.000000f},
+  {1.123990f, 0.658341f, 0.000000f},
+  {1.089100f, 0.593878f, 0.000000f},
+  {1.030480f, 0.527963f, 0.000000f},
+  {0.950740f, 0.461834f, 0.000000f},
+  {0.856297f, 0.398057f, 0.000000f},
+  {0.754930f, 0.339554f, 0.000000f},
+  {0.647467f, 0.283493f, 0.000000f},
+  {0.535110f, 0.228254f, 0.000000f},
+  {0.431567f, 0.179828f, 0.000000f},
+  {0.343690f, 0.140211f, 0.000000f},
+  {0.268329f, 0.107633f, 0.000000f},
+  {0.204300f, 0.081187f, 0.000000f},
+  {0.152568f, 0.060281f, 0.000000f},
+  {0.112210f, 0.044096f, 0.000000f},
+  {0.081261f, 0.031800f, 0.000000f},
+  {0.057930f, 0.022602f, 0.000000f},
+  {0.040851f, 0.015905f, 0.000000f},
+  {0.028623f, 0.011130f, 0.000000f},
+  {0.019941f, 0.007749f, 0.000000f},
+  {0.013842f, 0.005375f, 0.000000f},
+  {0.009577f, 0.003718f, 0.000000f},
+  {0.006605f, 0.002565f, 0.000000f},
+  {0.004553f, 0.001768f, 0.000000f},
+  {0.003145f, 0.001222f, 0.000000f},
+  {0.002175f, 0.000846f, 0.000000f},
+  {0.001506f, 0.000586f, 0.000000f},
+  {0.001045f, 0.000407f, 0.000000f},
+  {0.000727f, 0.000284f, 0.000000f},
+  {0.000508f, 0.000199f, 0.000000f},
+  {0.000356f, 0.000140f, 0.000000f},
+  {0.000251f, 0.000098f, 0.000000f},
+  {0.000178f, 0.000070f, 0.000000f},
+  {0.000126f, 0.000050f, 0.000000f},
+  {0.000090f, 0.000036f, 0.000000f},
+  {0.000065f, 0.000025f, 0.000000f},
+  {0.000046f, 0.000018f, 0.000000f},
+  {0.000033f, 0.000013f, 0.000000f}
+};
 const double Constants::SpeedOfLight = 2.99792458e8;
 const double Constants::Planck = 6.62607004e-34;
 const double Constants::Boltzmann = 1.3806485279e-23;
@@ -632,22 +715,44 @@ float Blackbody::operator()(float lambda) const
    return float(c1 * pow(l, -5) / (exp(c2 / (l * temperature)) - 1));
 }
 
-class BlackbodyColorCache
+class BlackbodyColor
 {
 public:
-   BlackbodyColorCache(int maxTemp=20000)
+   BlackbodyColor(int maxTemp=20000)
    {
-      mCount = maxTemp + 1;
-      mValues = new XYZ[mCount];
+      int evi = 0;
+      char *ev = 0;
 
-      for (int i=0; i<mCount; ++i)
+      ev = getenv("GMATH_BLACKBODY_STDOBS1964");
+      mUseObs1964 = (ev && sscanf(ev, "%d", &evi) == 1 && evi != 0);
+
+      ev = getenv("GMATH_BLACKBODY_CACHE");
+      if (!ev || (sscanf(ev, "%d", &evi) == 1 && evi != 0))
       {
-         Blackbody bb(i);
-         mValues[i] = IntegrateVisibleSpectrum(bb);
+         ev = getenv("GMATH_BLACKBODY_CACHE_MAX_TEMPERATURE");
+
+         if (ev && sscanf(ev, "%d", &evi) == 1 && evi >= 0)
+         {
+            maxTemp = evi;
+         }
+
+         mCount = maxTemp + 1;
+         mValues = new XYZ[mCount];
+
+         for (int i=0; i<mCount; ++i)
+         {
+            Blackbody bb(i);
+            mValues[i] = IntegrateVisibleSpectrum(bb, (mUseObs1964 ? Constants::CIEStdObs1964 : Constants::CIEStdObs1931));
+         }
+      }
+      else
+      {
+         mCount = 0;
+         mValues = 0;
       }
    }
 
-   ~BlackbodyColorCache()
+   ~BlackbodyColor()
    {
       if (mValues)
       {
@@ -662,7 +767,7 @@ public:
       {
          // value not cached, compute it
          Blackbody bb(temp);
-         return IntegrateVisibleSpectrum(bb);
+         return IntegrateVisibleSpectrum(bb, (mUseObs1964 ? Constants::CIEStdObs1964 : Constants::CIEStdObs1931));
       }
       else
       {
@@ -674,23 +779,24 @@ private:
 
    int mCount;
    XYZ *mValues;
+   bool mUseObs1964;
 };
 
-static BlackbodyColorCache BCC;
+static BlackbodyColor BBC;
 
 XYZ Blackbody::GetXYZ(float temp)
 {
-   return BCC(temp);
+   return BBC(temp);
 }
 
 Chromaticity Blackbody::GetChromaticity(float temp)
 {
-   return gmath::GetChromaticity(BCC(temp));
+   return gmath::GetChromaticity(BBC(temp));
 }
 
 RGB Blackbody::GetRGB(float temp, const ColorSpace &cs)
 {
-   return cs.XYZtoRGB(BCC(temp)).ceil(0.0f);
+   return cs.XYZtoRGB(BBC(temp)).ceil(0.0f);
 }
 
 } // namespace gmath

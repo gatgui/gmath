@@ -294,23 +294,29 @@ namespace gmath
       static const float MaxVisibleWavelength; // nm
       static const float WavelengthStep; // nm
       static const float CIEStdObs1931[81][3];
+      static const float CIEStdObs1964[81][3];
       static const double SpeedOfLight; // m/s
       static const double Planck; // Js
       static const double Boltzmann; // J/K
    };
 
    template <class SpectralPowerDensityFunc>
-   XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd)
+   XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd, const float stdobs[81][3]=0)
    {
       XYZ rv;
       float lambda = Constants::MinVisibleWavelength;
 
+      if (stdobs == 0)
+      {
+         stdobs = Constants::CIEStdObs1931;
+      }
+
       for (int i=0; i<81; ++i, lambda+=Constants::WavelengthStep)
       {
          float p = spd(lambda);
-         rv.x += p * Constants::CIEStdObs1931[i][0];
-         rv.y += p * Constants::CIEStdObs1931[i][1];
-         rv.z += p * Constants::CIEStdObs1931[i][2];
+         rv.x += p * stdobs[i][0];
+         rv.y += p * stdobs[i][1];
+         rv.z += p * stdobs[i][2];
       }
 
       rv /= (rv.x + rv.y + rv.z);
