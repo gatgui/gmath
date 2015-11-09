@@ -515,6 +515,15 @@ static const LogCParams LogCv3_params[11] = {
    {0.013047f, 5.555556f, 0.038625f, 0.237781f, 0.387093f, 5.163350f, 0.092824f, 0.160192f}
 };
 
+static const float Cineon_white = 685.0f;
+static const float Cineon_black = 95.0f;
+static const float Cineon_ic0 = 0.6f / 0.002f;
+static const float Cineon_c0 = 0.002f / 0.6f;
+static const float Cineon_c1 = 1.0f / 1023.0f;
+static const float Cineon_igain = 1.0f - powf(10.0f, (Cineon_black - Cineon_white) * Cineon_c0);
+static const float Cineon_gain = 1.0f / Cineon_igain;
+static const float Cineon_offset = Cineon_gain - 1.0f;
+
 RGB Linearize(const RGB &c, NonLinearTransform nlt)
 {
    static float sRGBScale = 1.0f / 12.92f;
@@ -573,7 +582,15 @@ RGB Linearize(const RGB &c, NonLinearTransform nlt)
       break;
 
    case NLT_Cineon:
-      // TODO
+      // http://www.cineon.com/conv_10to8bit.php
+      // http://www.digital-intermediate.co.uk/film/pdf/Cineon.pdf
+      // Note: cineon values have 1024 steps [0, 1023]
+      rgb.r = powf(10.0f, (1023.0f * c.r - Cineon_white) * Cineon_c0) * Cineon_gain - Cineon_offset;
+      rgb.g = powf(10.0f, (1023.0f * c.g - Cineon_white) * Cineon_c0) * Cineon_gain - Cineon_offset;
+      rgb.b = powf(10.0f, (1023.0f * c.b - Cineon_white) * Cineon_c0) * Cineon_gain - Cineon_offset;
+      rgb.ceil(0.0f);
+      break;
+
    default:
       rgb = c;
    }
@@ -633,7 +650,14 @@ RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
       break;
 
    case NLT_Cineon:
-      // TODO
+      // http://www.cineon.com/conv_10to8bit.php
+      // http://www.digital-intermediate.co.uk/film/pdf/Cineon.pdf
+      // Note: cineon values have 1024 steps [0, 1023]
+      rgb.r = Cineon_c1 * (Cineon_white + Cineon_ic0 * log10f(Cineon_igain * (c.r + Cineon_offset)));
+      rgb.g = Cineon_c1 * (Cineon_white + Cineon_ic0 * log10f(Cineon_igain * (c.g + Cineon_offset)));
+      rgb.b = Cineon_c1 * (Cineon_white + Cineon_ic0 * log10f(Cineon_igain * (c.b + Cineon_offset)));
+      break;
+
    default:
       rgb = c;
    }
