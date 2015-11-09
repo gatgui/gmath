@@ -257,8 +257,29 @@ namespace gmath
       NLT_Gamma22 = 0,
       NLT_Gamma24,
       NLT_sRGB,
-      NLT_Rec709
+      NLT_Rec709,
+      NLT_LogCv2 = NLT_Rec709 + 8, // base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
+      NLT_LogCv3 = NLT_LogCv2 + 11, // base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
+      NLT_LogC = NLT_LogCv3,
+      NLT_Cineon = NLT_LogCv3 + 4
    };
+
+   enum LogCExposureLevel
+   {
+      EL_160 = -7,
+      EL_200 = -6,
+      EL_250 = -5,
+      EL_320 = -4,
+      EL_400 = -3,
+      EL_500 = -2,
+      EL_640 = -1,
+      EL_800 = 0,
+      EL_1000 = 1,
+      EL_1280 = 2,
+      EL_1600 = 3
+   };
+
+   // To use LogC gamma with el 160 -> NLT_LogC + EL_160
 
    GMATH_API RGB Linearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
    GMATH_API RGB Unlinearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
@@ -354,6 +375,8 @@ namespace gmath
       static const ColorSpace CIE;
       static const ColorSpace UHDTV;
       static const ColorSpace DCIP3;
+      static const ColorSpace AdobeWide;
+      static const ColorSpace AlexaWide;
 
    private:
       ColorSpace();

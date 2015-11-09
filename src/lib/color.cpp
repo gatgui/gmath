@@ -475,6 +475,46 @@ RGB RGBAtoRGB(const RGBA &rgba, bool premult)
    return rgb;
 }
 
+struct LogCParams
+{
+   float cut;
+   float a;
+   float b;
+   float c;
+   float d;
+   float e;
+   float f;
+   float ecut_f; // e * cut + f
+};
+
+static const LogCParams LogCv2_params[11] = {
+   {0.000000f, 5.061087f, 0.089004f, 0.269035f, 0.391007f, 6.332427f, 0.108361f, 0.108361f},
+   {0.000000f, 5.061087f, 0.089004f, 0.266007f, 0.391007f, 6.189953f, 0.111543f, 0.111543f},
+   {0.000000f, 5.061087f, 0.089004f, 0.262978f, 0.391007f, 6.034414f, 0.114725f, 0.114725f},
+   {0.000000f, 5.061087f, 0.089004f, 0.259627f, 0.391007f, 5.844973f, 0.118246f, 0.118246f},
+   {0.000000f, 5.061087f, 0.089004f, 0.256598f, 0.391007f, 5.656190f, 0.121428f, 0.121428f},
+   {0.000000f, 5.061087f, 0.089004f, 0.253569f, 0.391007f, 5.449261f, 0.124610f, 0.124610f},
+   {0.000000f, 5.061087f, 0.089004f, 0.250218f, 0.391007f, 5.198031f, 0.128130f, 0.128130f},
+   {0.000000f, 5.061087f, 0.089004f, 0.247189f, 0.391007f, 4.950469f, 0.131313f, 0.131313f},
+   {0.000000f, 5.061087f, 0.089004f, 0.244161f, 0.391007f, 4.684112f, 0.134495f, 0.134495f},
+   {0.000000f, 5.061087f, 0.089004f, 0.240810f, 0.391007f, 4.369609f, 0.138015f, 0.138015f},
+   {0.000000f, 5.061087f, 0.089004f, 0.237781f, 0.391007f, 4.070466f, 0.141197f, 0.141197f}
+};
+
+static const LogCParams LogCv3_params[11] = {
+   {0.005561f, 5.555556f, 0.080216f, 0.269036f, 0.381991f, 5.842037f, 0.092778f, 0.125266f},
+   {0.006208f, 5.555556f, 0.076621f, 0.266007f, 0.382478f, 5.776265f, 0.092782f, 0.128643f},
+   {0.006871f, 5.555556f, 0.072941f, 0.262978f, 0.382966f, 5.710494f, 0.092786f, 0.132021f},
+   {0.007622f, 5.555556f, 0.068768f, 0.259627f, 0.383508f, 5.637732f, 0.092791f, 0.135761f},
+   {0.008318f, 5.555556f, 0.064901f, 0.256598f, 0.383999f, 5.571960f, 0.092795f, 0.139142f},
+   {0.009031f, 5.555556f, 0.060939f, 0.253569f, 0.384493f, 5.506188f, 0.092800f, 0.142526f},
+   {0.009840f, 5.555556f, 0.056443f, 0.250219f, 0.385040f, 5.433426f, 0.092805f, 0.146271f},
+   {0.010591f, 5.555556f, 0.052272f, 0.247190f, 0.385537f, 5.367655f, 0.092809f, 0.149658f},
+   {0.011361f, 5.555556f, 0.047996f, 0.244161f, 0.386036f, 5.301883f, 0.092814f, 0.153047f},
+   {0.012235f, 5.555556f, 0.043137f, 0.240810f, 0.386590f, 5.229121f, 0.092819f, 0.156799f},
+   {0.013047f, 5.555556f, 0.038625f, 0.237781f, 0.387093f, 5.163350f, 0.092824f, 0.160192f}
+};
+
 RGB Linearize(const RGB &c, NonLinearTransform nlt)
 {
    static float sRGBScale = 1.0f / 12.92f;
@@ -482,6 +522,18 @@ RGB Linearize(const RGB &c, NonLinearTransform nlt)
    static float Rec709Power = 1.0f / 0.45f;
 
    RGB rgb;
+   const LogCParams *lcp = 0;
+
+   if (nlt > NLT_Rec709 && nlt <= NLT_LogCv2 + EL_1600)
+   {
+      lcp = &LogCv2_params[(nlt - NLT_LogCv2) + 7];
+      nlt = NLT_LogC;
+   }
+   else if (nlt > NLT_LogCv2 + EL_1600 && nlt <= NLT_LogCv3 + EL_1600)
+   {
+      lcp = &LogCv3_params[(nlt - NLT_LogCv3) + 7];
+      nlt = NLT_LogC;
+   }
 
    switch (nlt)
    {
@@ -508,6 +560,20 @@ RGB Linearize(const RGB &c, NonLinearTransform nlt)
       rgb.b = c.b < 0.081f ? c.b * Rec709Scale : powf((c.b + 0.099f) / 1.099f, Rec709Power);
       break;
 
+   case NLT_LogC:
+      // http://www.vocas.nl/webfm_send/964
+      {
+         float ia = 1.0f / lcp->a;
+         float ic = 1.0f / lcp->c;
+         float ie = 1.0f / lcp->e;
+         rgb.r = (c.r > lcp->ecut_f ? ia * (powf(10.0f, ic * (c.r - lcp->d)) - lcp->b) : ie * (c.r - lcp->f));
+         rgb.g = (c.g > lcp->ecut_f ? ia * (powf(10.0f, ic * (c.g - lcp->d)) - lcp->b) : ie * (c.g - lcp->f));
+         rgb.b = (c.b > lcp->ecut_f ? ia * (powf(10.0f, ic * (c.b - lcp->d)) - lcp->b) : ie * (c.b - lcp->f));
+      }
+      break;
+
+   case NLT_Cineon:
+      // TODO
    default:
       rgb = c;
    }
@@ -521,6 +587,18 @@ RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
    static float invGamma24 = 1.0f / 2.4f;
 
    RGB rgb;
+   const LogCParams *lcp = 0;
+
+   if (nlt > NLT_Rec709 && nlt <= NLT_LogCv2 + EL_1600)
+   {
+      lcp = &LogCv2_params[(nlt - NLT_LogCv2) + 7];
+      nlt = NLT_LogC;
+   }
+   else if (nlt > NLT_LogCv2 + EL_1600 && nlt <= NLT_LogCv3 + EL_1600)
+   {
+      lcp = &LogCv3_params[(nlt - NLT_LogCv3) + 7];
+      nlt = NLT_LogC;
+   }
 
    switch (nlt)
    {
@@ -547,6 +625,15 @@ RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
       rgb.b = c.b < 0.018f ? 4.5f * c.b : 1.099f * powf(c.b, 0.45f) - 0.099f;
       break;
 
+   case NLT_LogC:
+      // http://www.vocas.nl/webfm_send/964
+      rgb.r = (c.r > lcp->cut ? lcp->c * log10f(lcp->a * c.r + lcp->b) + lcp->d : lcp->e * c.r + lcp->f);
+      rgb.g = (c.g > lcp->cut ? lcp->c * log10f(lcp->a * c.g + lcp->b) + lcp->d : lcp->e * c.g + lcp->f);
+      rgb.b = (c.b > lcp->cut ? lcp->c * log10f(lcp->a * c.b + lcp->b) + lcp->d : lcp->e * c.b + lcp->f);
+      break;
+
+   case NLT_Cineon:
+      // TODO
    default:
       rgb = c;
    }
@@ -606,6 +693,8 @@ const ColorSpace ColorSpace::SMPTE("SMPTE C",
 // http://www.brucelindbloom.com/index.html?WorkingSpaceInfo.html
 // http://linuxtv.org/downloads/v4l-dvb-apis/ch02s06.html
 // http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
+// https://en.wikipedia.org/wiki/Wide-gamut_RGB_color_space
+// http://www.vocas.nl/webfm_send/964
 const ColorSpace ColorSpace::CIE("CIE RGB",
                                  Chromaticity(0.7347f, 0.2653f),
                                  Chromaticity(0.2738f, 0.7174f),
@@ -621,6 +710,16 @@ const ColorSpace ColorSpace::DCIP3("DCI-P3",
                                    Chromaticity(0.265f, 0.69f),
                                    Chromaticity(0.15f, 0.06f),
                                    Chromaticity(0.314f, 0.351f));
+const ColorSpace ColorSpace::AdobeWide("Adobe Wide Gamut RGB",
+                                       Chromaticity(0.7347f, 0.2653f),
+                                       Chromaticity(0.1152f, 0.8264f),
+                                       Chromaticity(0.1566f, 0.0177f),
+                                       Chromaticity::IllumD50);
+const ColorSpace ColorSpace::AlexaWide("ALEXA Wide Gamut RGB",
+                                       Chromaticity(0.6840f,  0.313f),
+                                       Chromaticity(0.2210f,  0.848f),
+                                       Chromaticity(0.0861f, -0.102f),
+                                       Chromaticity::IllumD65);
 
 ColorSpace::ColorSpace(const char *name,
                        const Chromaticity &r,
