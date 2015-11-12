@@ -18,6 +18,24 @@ def NoDeprecated(env):
       # On recent OSX (10.9~) GLUT is deprecated
       env.Append(CPPFLAGS=" -Wno-deprecated-declarations")
 
+def RequireGmath(subdir=None):
+  if subdir and type(subdir) in (str, unicode):
+    if not (subdir.endswith("/") or subdir.endswith("\\")):
+      subdir += "/"
+  else:
+    subdir = ""
+
+  def _Require(env):
+    env.Append(CPPPATH=[subdir+"include"])
+    # Don't need to set LIBPATH, library output directory is automatically added by excons
+    env.Append(LIBS=["gmath"])
+    if staticBuild:
+      env.Append(CPPDEFINES=["GMATH_STATIC"])
+
+  return _Require
+
+Export("RequireGmath")
+
 prjs = [
   { "name"    : "gmath",
     "type"    : ("staticlib" if staticBuild else "sharedlib"),
