@@ -321,6 +321,24 @@ namespace gmath
       static const double Boltzmann; // J/K
    };
 
+   class GMATH_API ChromaticAdaptation
+   {
+   public:
+      static const Matrix3 VonKries;
+      static const Matrix3 Bradford;
+      static const Matrix3 Sharp;
+      static const Matrix3 CMCCAT2000;
+      static const Matrix3 CAT02;
+      static const Matrix3 XYZ;
+
+      static const Matrix3 InvVonKries;
+      static const Matrix3 InvBradford;
+      static const Matrix3 InvSharp;
+      static const Matrix3 InvCMCCAT2000;
+      static const Matrix3 InvCAT02;
+      static const Matrix3 InvXYZ;
+   };
+
    template <class SpectralPowerDensityFunc>
    XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd, const float stdobs[81][3]=0)
    {

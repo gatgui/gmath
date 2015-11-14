@@ -199,6 +199,32 @@ const double Constants::SpeedOfLight = 2.99792458e8;
 const double Constants::Planck = 6.62607004e-34;
 const double Constants::Boltzmann = 1.3806485279e-23;
 
+const Matrix3 ChromaticAdaptation::VonKries( 0.40024f, 0.70760f, -0.08081f,
+                                            -0.22630f, 1.16532f,  0.04570f,
+                                             0.00000f, 0.00000f,  0.91822f);
+const Matrix3 ChromaticAdaptation::Bradford( 0.89510f,  0.26640f, -0.16140f,
+                                            -0.75020f,  1.71350f,  0.03670f,
+                                             0.03890f, -0.06850f,  1.02960f);
+const Matrix3 ChromaticAdaptation::Sharp( 1.2694f, -0.0988f, -0.1706f,
+                                         -0.8364f,  1.8006f,  0.0357f,
+                                          0.0297f, -0.0315f,  1.0018f);
+const Matrix3 ChromaticAdaptation::CMCCAT2000( 0.7982f, 0.3389f, -0.1371f,
+                                              -0.5918f, 1.5512f,  0.0406f,
+                                               0.0008f, 0.2390f,  0.9753f);
+const Matrix3 ChromaticAdaptation::CAT02( 0.7328f, 0.4296f, -0.1624f,
+                                         -0.7036f, 1.6975f,  0.0061f,
+                                          0.0030f, 0.0136f,  0.9834f);
+const Matrix3 ChromaticAdaptation::XYZ(1.0f, 0.0f, 0.0f,
+                                       0.0f, 1.0f, 0.0f,
+                                       0.0f, 0.0f, 1.0f);
+const Matrix3 ChromaticAdaptation::InvVonKries(ChromaticAdaptation::VonKries.getInverse());
+const Matrix3 ChromaticAdaptation::InvBradford(ChromaticAdaptation::Bradford.getInverse());
+const Matrix3 ChromaticAdaptation::InvSharp(ChromaticAdaptation::Sharp.getInverse());
+const Matrix3 ChromaticAdaptation::InvCMCCAT2000(ChromaticAdaptation::CMCCAT2000.getInverse());
+const Matrix3 ChromaticAdaptation::InvCAT02(ChromaticAdaptation::CAT02.getInverse());
+const Matrix3 ChromaticAdaptation::InvXYZ(ChromaticAdaptation::XYZ.getInverse());
+
+
 float Chroma(const RGB &rgb)
 {
    float M = std::max(rgb.r, std::max(rgb.g, rgb.b));
