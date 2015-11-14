@@ -464,9 +464,6 @@ namespace gmath
       static Chromaticity GetChromaticity(float temp);
       static XYZ GetXYZ(float temp);
       static RGB GetRGB(float temp, const ColorSpace &cs);
-
-   private:
-      Blackbody();
    };
 
    // ---

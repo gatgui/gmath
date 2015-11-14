@@ -272,19 +272,19 @@ HSL RGBtoHSL(const RGB &rgb, float epsilon)
    float m = std::min(rgb.r, std::min(rgb.g, rgb.b));
    float C = M - m;
 
-   hsl.h = 0;
-   hsl.s = 0;
-   hsl.l = 0.5 * (m + M);
+   hsl.h = 0.0f;
+   hsl.s = 0.0f;
+   hsl.l = 0.5f * (m + M);
 
    if (C >= epsilon)
    {
-      if (hsl.l <= 0.5)
+      if (hsl.l <= 0.5f)
       {
-         hsl.s = C / (2 * hsl.l);
+         hsl.s = C / (2.0f * hsl.l);
       }
       else
       {
-         hsl.s = C / (2 * (1 - hsl.l));
+         hsl.s = C / (2.0f * (1.0f - hsl.l));
       }
 
       if (M == rgb.r)
@@ -293,20 +293,20 @@ HSL RGBtoHSL(const RGB &rgb, float epsilon)
       }
       else if (M == rgb.g)
       {
-         hsl.h = (rgb.b - rgb.r) / C + 2;
+         hsl.h = (rgb.b - rgb.r) / C + 2.0f;
       }
       else
       {
-         hsl.h = (rgb.r - rgb.g) / C + 4;
+         hsl.h = (rgb.r - rgb.g) / C + 4.0f;
       }
 
-      static float sNormalizeHue = 60.0 / 360.0;
+      static float sNormalizeHue = 60.0f / 360.0f;
 
       hsl.h *= sNormalizeHue;
 
-      if (hsl.h < 0)
+      if (hsl.h < 0.0f)
       {
-         hsl.h += 1;
+         hsl.h += 1.0f;
       }
    }
 
@@ -321,8 +321,8 @@ HSV RGBtoHSV(const RGB &rgb, float epsilon)
    float m = std::min(rgb.r, std::min(rgb.g, rgb.b));
    float C = M - m;
 
-   hsv.h = 0;
-   hsv.s = 0;
+   hsv.h = 0.0f;
+   hsv.s = 0.0f;
    hsv.v = M;
 
    if (M >= epsilon)
@@ -338,20 +338,20 @@ HSV RGBtoHSV(const RGB &rgb, float epsilon)
       }
       else if (M == rgb.g)
       {
-         hsv.h = (rgb.b - rgb.r) / C + 2;
+         hsv.h = (rgb.b - rgb.r) / C + 2.0f;
       }
       else
       {
-         hsv.h = (rgb.r - rgb.g) / C + 4;
+         hsv.h = (rgb.r - rgb.g) / C + 4.0f;
       }
 
-      static float sNormalizeHue = 60.0 / 360.0;
+      static float sNormalizeHue = 60.0f / 360.0f;
 
       hsv.h *= sNormalizeHue;
 
-      if (hsv.h < 0)
+      if (hsv.h < 0.0f)
       {
-         hsv.h += 1;
+         hsv.h += 1.0f;
       }
    }
 
@@ -363,43 +363,43 @@ RGB HSVtoRGB(const HSV &hsv)
    RGB rgb;
 
    float C = hsv.v * hsv.s;
-   float h = hsv.h * 6;
-   float X = C * (1 - fabs(fmod(h, 2) - 1));
+   float h = hsv.h * 6.0f;
+   float X = C * (1.0f - fabs(fmod(h, 2.0f) - 1.0f));
 
-   if (h < 1)
+   if (h < 1.0f)
    {
       rgb.r = C;
       rgb.g = X;
-      rgb.b = 0;
+      rgb.b = 0.0f;
    }
-   else if (h < 2)
+   else if (h < 2.0f)
    {
       rgb.r = X;
       rgb.g = C;
-      rgb.b = 0;
+      rgb.b = 0.0f;
    }
-   else if (h < 3)
+   else if (h < 3.0f)
    {
-      rgb.r = 0;
+      rgb.r = 0.0f;
       rgb.g = C;
       rgb.b = X;
    }
-   else if (h < 4)
+   else if (h < 4.0f)
    {
-      rgb.r = 0;
+      rgb.r = 0.0f;
       rgb.g = X;
       rgb.b = C;
    }
-   else if (h < 5)
+   else if (h < 5.0f)
    {
       rgb.r = X;
-      rgb.g = 0;
+      rgb.g = 0.0f;
       rgb.b = C;
    }
    else
    {
       rgb.r = C;
-      rgb.g = 0;
+      rgb.g = 0.0f;
       rgb.b = X;
    }
 
@@ -418,56 +418,56 @@ RGB HSLtoRGB(const HSL &hsl)
 
    float C;
 
-   if (hsl.l <= 0.5)
+   if (hsl.l <= 0.5f)
    {
-      C = 2 * hsl.l * hsl.s;
+      C = 2.0f * hsl.l * hsl.s;
    }
    else
    {
-      C = (2 - 2 * hsl.l) * hsl.s;
+      C = (2.0f - 2.0f * hsl.l) * hsl.s;
    }
 
-   float h = hsl.h * 6;
-   float X = C * (1 - fabs(fmod(h, 2) - 1));
+   float h = hsl.h * 6.0f;
+   float X = C * (1.0f - fabs(fmod(h, 2.0f) - 1.0f));
 
-   if (h < 1)
+   if (h < 1.0f)
    {
       rgb.r = C;
       rgb.g = X;
-      rgb.b = 0;
+      rgb.b = 0.0f;
    }
-   else if (h < 2)
+   else if (h < 2.0f)
    {
       rgb.r = X;
       rgb.g = C;
-      rgb.b = 0;
+      rgb.b = 0.0f;
    }
-   else if (h < 3)
+   else if (h < 3.0f)
    {
-      rgb.r = 0;
+      rgb.r = 0.0f;
       rgb.g = C;
       rgb.b = X;
    }
-   else if (h < 4)
+   else if (h < 4.0f)
    {
-      rgb.r = 0;
+      rgb.r = 0.0f;
       rgb.g = X;
       rgb.b = C;
    }
-   else if (h < 5)
+   else if (h < 5.0f)
    {
       rgb.r = X;
-      rgb.g = 0;
+      rgb.g = 0.0f;
       rgb.b = C;
    }
    else
    {
       rgb.r = C;
-      rgb.g = 0;
+      rgb.g = 0.0f;
       rgb.b = X;
    }
 
-   float m = hsl.l - 0.5 * C;
+   float m = hsl.l - 0.5f * C;
 
    rgb.r += m;
    rgb.g += m;
@@ -930,7 +930,7 @@ public:
 
          for (int i=0; i<mCount; ++i)
          {
-            Blackbody bb(i);
+            Blackbody bb((float)i);
             mValues[i] = IntegrateVisibleSpectrum(bb, (mUseObs1964 ? Constants::CIEStdObs1964 : Constants::CIEStdObs1931));
          }
       }
@@ -997,7 +997,7 @@ std::ostream& operator<<(std::ostream &os, const gmath::ColorSpace &cs)
    cs.getPrimaries(r, g, b);
    w = cs.getWhitePoint();
 
-   os << "ColorSpace \"" << cs.getName() << "\"" << std::endl;
+   os << "ColorSpace \"" << cs.getName().c_str() << "\"" << std::endl;
    os << "  Primaries" << std::endl;
    os << "    Red: (" << r.x << ", " << r.y << ")" << std::endl;
    os << "    Green: (" << g.x << ", " << g.y << ")" << std::endl;
