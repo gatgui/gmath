@@ -501,6 +501,46 @@ RGB RGBAtoRGB(const RGBA &rgba, bool premult)
    return rgb;
 }
 
+LMS XYZtoLMS(const XYZ &xyz, ChromaticAdaptationTransform cat)
+{
+   switch (cat)
+   {
+   case CAT_VonKries:
+      return LMS(ChromaticAdaptation::VonKries * Vector3(xyz));
+   case CAT_Bradford:
+      return LMS(ChromaticAdaptation::Bradford * Vector3(xyz));
+   case CAT_Sharp:
+      return LMS(ChromaticAdaptation::Sharp * Vector3(xyz));
+   case CAT_CMC2000:
+      return LMS(ChromaticAdaptation::CMCCAT2000 * Vector3(xyz));
+   case CAT_02:
+      return LMS(ChromaticAdaptation::CAT02 * Vector3(xyz));
+   case CAT_XYZ:
+   default:
+      return LMS(ChromaticAdaptation::XYZ * Vector3(xyz));
+   }
+}
+
+XYZ LMStoXYZ(const LMS &lms, ChromaticAdaptationTransform cat)
+{
+   switch (cat)
+   {
+   case CAT_VonKries:
+      return XYZ(ChromaticAdaptation::InvVonKries * Vector3(lms));
+   case CAT_Bradford:
+      return XYZ(ChromaticAdaptation::InvBradford * Vector3(lms));
+   case CAT_Sharp:
+      return XYZ(ChromaticAdaptation::InvSharp * Vector3(lms));
+   case CAT_CMC2000:
+      return XYZ(ChromaticAdaptation::InvCMCCAT2000 * Vector3(lms));
+   case CAT_02:
+      return XYZ(ChromaticAdaptation::InvCAT02 * Vector3(lms));
+   case CAT_XYZ:
+   default:
+      return XYZ(ChromaticAdaptation::InvXYZ * Vector3(lms));
+   }
+}
+
 struct LogCParams
 {
    float cut;

@@ -138,6 +138,27 @@ namespace gmath
          operator const float* () const;
       };
 
+      class GMATH_API LMS
+      {
+      public:
+
+         static const int Dim = 3;
+
+         float l;
+         float m;
+         float s;
+
+         LMS();
+         LMS(float v);
+         LMS(const float *v);
+         LMS(const LMS &rhs);
+         ~LMS();
+
+         LMS& operator=(const LMS &rhs);
+         operator float* ();
+         operator const float* () const;
+      };
+
       // ---
 
       inline RGB::RGB() : r(0.0f), g(0.0f), b(0.0f) {}
@@ -184,6 +205,15 @@ namespace gmath
       inline XYZ& XYZ::operator=(const XYZ &rhs) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
       inline XYZ::operator float* () { return &(this->x); }
       inline XYZ::operator const float* () const { return &(this->x); }
+
+      inline LMS::LMS() : l(0.0f), m(0.0f), s(0.0f) {}
+      inline LMS::LMS(float v) : l(v), m(v), s(v) {}
+      inline LMS::LMS(const float *v) : l(v[0]), m(v[1]), s(v[2]) {}
+      inline LMS::LMS(const LMS &rhs) : l(rhs.l), m(rhs.m), s(rhs.s) {}
+      inline LMS::~LMS() {}
+      inline LMS& LMS::operator=(const LMS &rhs) { l = rhs.l; m = rhs.m; s = rhs.s; return *this; }
+      inline LMS::operator float* () { return &(this->l); }
+      inline LMS::operator const float* () const { return &(this->l); }
    }
 
    template <class Base>
@@ -235,6 +265,7 @@ namespace gmath
    typedef TColor<details::HSV> HSV;
    typedef TColor<details::HSL> HSL;
    typedef TColor<details::XYZ> XYZ;
+   typedef TColor<details::LMS> LMS;
 
    // Other functions here
 
@@ -338,6 +369,19 @@ namespace gmath
       static const Matrix3 InvCAT02;
       static const Matrix3 InvXYZ;
    };
+
+   enum ChromaticAdaptationTransform
+   {
+      CAT_VonKries = 0,
+      CAT_Bradford,
+      CAT_Sharp,
+      CAT_CMC2000,
+      CAT_02,
+      CAT_XYZ
+   };
+
+   LMS XYZtoLMS(const XYZ &xyz, ChromaticAdaptationTransform cat=CAT_VonKries);
+   XYZ LMStoXYZ(const LMS &lms, ChromaticAdaptationTransform cat=CAT_VonKries);
 
    template <class SpectralPowerDensityFunc>
    XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd, const float stdobs[81][3]=0)
