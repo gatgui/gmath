@@ -468,10 +468,11 @@ namespace gmath
       static const ColorSpace NTSC;
       static const ColorSpace SMPTE;
       static const ColorSpace CIE;
-      static const ColorSpace UHDTV;
+      static const ColorSpace UHDTV; // Rec. 2020
       static const ColorSpace DCIP3;
       static const ColorSpace AdobeWide;
       static const ColorSpace AlexaWide;
+      static const ColorSpace AdobeRGB;
 
    private:
       ColorSpace();

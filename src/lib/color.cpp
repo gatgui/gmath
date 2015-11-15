@@ -613,6 +613,7 @@ RGB Linearize(const RGB &c, NonLinearTransform nlt)
    switch (nlt)
    {
    case NLT_Gamma22:
+      // Exact Adobe RGB: 563.0 / 256.0f
       rgb.r = powf(c.r, 2.2f);
       rgb.g = powf(c.g, 2.2f);
       rgb.b = powf(c.b, 2.2f);
@@ -810,6 +811,11 @@ const ColorSpace ColorSpace::AlexaWide("ALEXA Wide Gamut RGB",
                                        Chromaticity(0.2210f,  0.848f),
                                        Chromaticity(0.0861f, -0.102f),
                                        Chromaticity::IllumD65);
+const ColorSpace ColorSpace::AdobeRGB("Adobe RGB",
+                                      Chromaticity(0.64f, 0.33f),
+                                      Chromaticity(0.21f, 0.71f),
+                                      Chromaticity(0.15f, 0.06f),
+                                      Chromaticity::IllumD65);
 
 ColorSpace::ColorSpace(const char *name,
                        const Chromaticity &r,
