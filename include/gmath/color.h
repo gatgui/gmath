@@ -159,6 +159,27 @@ namespace gmath
          operator const float* () const;
       };
 
+      class GMATH_API YUV
+      {
+      public:
+
+         static const int Dim = 3;
+
+         float y;
+         float u;
+         float v;
+
+         YUV();
+         YUV(float v);
+         YUV(const float *v);
+         YUV(const YUV &rhs);
+         ~YUV();
+
+         YUV& operator=(const YUV &rhs);
+         operator float* ();
+         operator const float* () const;
+      };
+
       // ---
 
       inline RGB::RGB() : r(0.0f), g(0.0f), b(0.0f) {}
@@ -214,6 +235,15 @@ namespace gmath
       inline LMS& LMS::operator=(const LMS &rhs) { l = rhs.l; m = rhs.m; s = rhs.s; return *this; }
       inline LMS::operator float* () { return &(this->l); }
       inline LMS::operator const float* () const { return &(this->l); }
+
+      inline YUV::YUV() : y(0.0f), u(0.0f), v(0.0f) {}
+      inline YUV::YUV(float v) : y(v), u(v), v(v) {}
+      inline YUV::YUV(const float *v) : y(v[0]), u(v[1]), v(v[2]) {}
+      inline YUV::YUV(const YUV &rhs) : y(rhs.y), u(rhs.u), v(rhs.v) {}
+      inline YUV::~YUV() {}
+      inline YUV& YUV::operator=(const YUV &rhs) { y = rhs.y; u = rhs.u; v = rhs.v; return *this; }
+      inline YUV::operator float* () { return &(this->y); }
+      inline YUV::operator const float* () const { return &(this->y); }
    }
 
    template <class Base>
@@ -266,6 +296,7 @@ namespace gmath
    typedef TColor<details::HSL> HSL;
    typedef TColor<details::XYZ> XYZ;
    typedef TColor<details::LMS> LMS;
+   typedef TColor<details::YUV> YUV;
 
    // Other functions here
 
@@ -422,6 +453,8 @@ namespace gmath
       float luminance(const RGB &c) const;
       XYZ RGBtoXYZ(const RGB &rgb) const;
       RGB XYZtoRGB(const XYZ &xyz) const;
+      YUV RGBtoYUV(const RGB &rgb) const;
+      RGB YUVtoRGB(const YUV &yuv) const;
 
       const std::string& getName() const;
       const Matrix3& getRGBtoXYZMatrix() const;

@@ -884,6 +884,43 @@ RGB ColorSpace::XYZtoRGB(const XYZ &xyz) const
    return RGB(mXYZtoRGB * Vector3(xyz));
 }
 
+// https://en.wikipedia.org/wiki/YUV
+static const float Umax = 0.436f;
+static const float Vmax = 0.615f;
+
+YUV ColorSpace::RGBtoYUV(const RGB &rgb) const
+{
+   YUV yuv;
+
+   float Wr = mRGBtoXYZ(1, 0);
+   float Wg = mRGBtoXYZ(1, 1);
+   float Wb = mRGBtoXYZ(1, 2);
+
+   yuv.y = Wr * rgb.r + Wg * rgb.g + Wb * rgb.b; // = luminance(rgb)
+   yuv.u = Umax * (rgb.b - yuv.y) / (1.0f - Wb);
+   yuv.v = Vmax * (rgb.r - yuv.y) / (1.0f - Wr);
+
+   return yuv;
+}
+
+RGB ColorSpace::YUVtoRGB(const YUV &yuv) const
+{
+   RGB rgb;
+
+   float Wr = mRGBtoXYZ(1, 0);
+   float Wg = mRGBtoXYZ(1, 1);
+   float Wb = mRGBtoXYZ(1, 2);
+   float invWg = 1.0f / Wg;
+   float utmp = yuv.u * (1.0f - Wb) / Umax;
+   float vtmp = yuv.v * (1.0f - Wr) / Vmax;
+
+   rgb.r = yuv.y + vtmp;
+   rgb.g = yuv.y - invWg * (Wb * utmp + Wr * vtmp);
+   rgb.b = yuv.y + utmp;
+
+   return rgb;
+}
+
 
 Blackbody::Blackbody(float t)
    : temperature(t)
