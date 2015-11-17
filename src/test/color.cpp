@@ -66,22 +66,22 @@ int main(int, char**)
 
       rv = cs.RGBtoXYZ(r);
       rv2 = cs.XYZtoRGB(rv);
-      c = GetChromaticity(rv);
+      c = XYZtoChromaticity(rv);
       std::cout << r << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
 
       rv = cs.RGBtoXYZ(g);
       rv2 = cs.XYZtoRGB(rv);
-      c = GetChromaticity(rv);
+      c = XYZtoChromaticity(rv);
       std::cout << g << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
 
       rv = cs.RGBtoXYZ(b);
       rv2 = cs.XYZtoRGB(rv);
-      c = GetChromaticity(rv);
+      c = XYZtoChromaticity(rv);
       std::cout << b << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
 
       rv = cs.RGBtoXYZ(w);
       rv2 = cs.XYZtoRGB(rv);
-      c = GetChromaticity(rv);
+      c = XYZtoChromaticity(rv);
       std::cout << w << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
    }
 
@@ -89,6 +89,13 @@ int main(int, char**)
    {
       std::cout << "Color temperature " << temp << " = xyz=" << Blackbody::GetXYZ(temp) << ", rgb=" << Blackbody::GetRGB(temp, ColorSpace::Rec709) << ", chromaticity=" << Blackbody::GetChromaticity(temp) << std::endl;
    }
+
+   XYZ D50 = ChromaticityYtoXYZ(Chromaticity::IllumD50, 1.0f);
+   XYZ D65 = ChromaticityYtoXYZ(Chromaticity::IllumD65, 1.0f);
+   std::cout << "Chromatic adaptation matrices from D50 " << D50 << " to D65 " << D65 << std::endl;
+   std::cout << "  VonKries: " << ChromaticAdaptationMatrix(D50, D65, CAT_VonKries) << std::endl;
+   std::cout << "  Bradford: " << ChromaticAdaptationMatrix(D50, D65, CAT_Bradford) << std::endl;
+   std::cout << "  XYZ: " << ChromaticAdaptationMatrix(D50, D65, CAT_XYZ) << std::endl;
 
    return 0;
 }

@@ -367,8 +367,8 @@ namespace gmath
       static const Chromaticity IllumE;
    };
 
-   GMATH_API Chromaticity GetChromaticity(const XYZ &xyz);
-   GMATH_API XYZ GetXYZ(const Chromaticity &c, float Y);
+   GMATH_API Chromaticity XYZtoChromaticity(const XYZ &xyz);
+   GMATH_API XYZ ChromaticityYtoXYZ(const Chromaticity &c, float Y);
 
    class GMATH_API Constants
    {
@@ -411,8 +411,9 @@ namespace gmath
       CAT_XYZ
    };
 
-   LMS XYZtoLMS(const XYZ &xyz, ChromaticAdaptationTransform cat=CAT_VonKries);
-   XYZ LMStoXYZ(const LMS &lms, ChromaticAdaptationTransform cat=CAT_VonKries);
+   GMATH_API LMS XYZtoLMS(const XYZ &xyz, ChromaticAdaptationTransform cat=CAT_VonKries);
+   GMATH_API XYZ LMStoXYZ(const LMS &lms, ChromaticAdaptationTransform cat=CAT_VonKries);
+   GMATH_API Matrix3 ChromaticAdaptationMatrix(const XYZ &from, const XYZ &to, ChromaticAdaptationTransform cat=CAT_VonKries);
 
    template <class SpectralPowerDensityFunc>
    XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd, const float stdobs[81][3]=0)

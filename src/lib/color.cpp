@@ -541,6 +541,32 @@ XYZ LMStoXYZ(const LMS &lms, ChromaticAdaptationTransform cat)
    }
 }
 
+GMATH_API Matrix3 ChromaticAdaptationMatrix(const XYZ &from, const XYZ &to, ChromaticAdaptationTransform cat)
+{
+   LMS scl = XYZtoLMS(to, cat) / XYZtoLMS(from, cat);
+
+   Matrix3 diag(scl.l, 0.0f, 0.0f,
+                0.0f, scl.m, 0.0f,
+                0.0f, 0.0f, scl.s);
+
+   switch (cat)
+   {
+   case CAT_VonKries:
+      return ChromaticAdaptation::InvVonKries * diag * ChromaticAdaptation::VonKries;
+   case CAT_Bradford:
+      return ChromaticAdaptation::InvBradford * diag * ChromaticAdaptation::Bradford;
+   case CAT_Sharp:
+      return ChromaticAdaptation::InvSharp * diag * ChromaticAdaptation::Sharp;
+   case CAT_CMC2000:
+      return ChromaticAdaptation::InvCMCCAT2000 * diag * ChromaticAdaptation::CMCCAT2000;
+   case CAT_02:
+      return ChromaticAdaptation::InvCAT02 * diag * ChromaticAdaptation::CAT02;
+   case CAT_XYZ:
+   default:
+      return ChromaticAdaptation::InvXYZ * diag * ChromaticAdaptation::XYZ;
+   }
+}
+
 struct LogCParams
 {
    float cut;
@@ -743,13 +769,13 @@ const Chromaticity Chromaticity::IllumD65(0.31271f, 0.32902f);
 const Chromaticity Chromaticity::IllumD75(0.29902f, 0.31485f);
 const Chromaticity Chromaticity::IllumE(1.0f/3.0f, 1.0f/3.0f);
 
-Chromaticity GetChromaticity(const XYZ &xyz)
+Chromaticity XYZtoChromaticity(const XYZ &xyz)
 {
    float isum = 1.0f / (xyz.x + xyz.y + xyz.z);
    return Chromaticity(xyz.x * isum, xyz.y * isum);
 }
 
-XYZ GetXYZ(const Chromaticity &c, float Y)
+XYZ ChromaticityYtoXYZ(const Chromaticity &c, float Y)
 {
    XYZ rv;
 
@@ -1023,7 +1049,7 @@ XYZ Blackbody::GetXYZ(float temp)
 
 Chromaticity Blackbody::GetChromaticity(float temp)
 {
-   return gmath::GetChromaticity(BBC(temp));
+   return XYZtoChromaticity(BBC(temp));
 }
 
 RGB Blackbody::GetRGB(float temp, const ColorSpace &cs)
