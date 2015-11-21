@@ -37,33 +37,6 @@ namespace gmath
       GMATH_DATA_API const float CIE1964[81][3];
    };
 
-   enum NonLinearTransform
-   {
-      NLT_Gamma22 = 0,
-      NLT_Gamma24,
-      NLT_sRGB,
-      NLT_Rec709,
-      NLT_LogCv2 = NLT_Rec709 + 8, // base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
-      NLT_LogCv3 = NLT_LogCv2 + 11, // base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
-      NLT_LogC = NLT_LogCv3,
-      NLT_Cineon = NLT_LogCv3 + 4
-   };
-
-   enum LogCExposureLevel
-   {
-      EL_160 = -7,
-      EL_200 = -6,
-      EL_250 = -5,
-      EL_320 = -4,
-      EL_400 = -3,
-      EL_500 = -2,
-      EL_640 = -1,
-      EL_800 = 0,
-      EL_1000 = 1,
-      EL_1280 = 2,
-      EL_1600 = 3
-   };
-
    enum ChromaticAdaptationTransform
    {
       CAT_VonKries = 0,
@@ -103,6 +76,41 @@ namespace gmath
       static const Chromaticity IllumD65;
       static const Chromaticity IllumD75;
       static const Chromaticity IllumE;
+   };
+
+   class GMATH_API Gamma
+   {
+   public:
+      enum NonLinearTransform
+      {
+         NLT_Gamma22 = 0,
+         NLT_Gamma24,
+         NLT_sRGB,
+         NLT_Rec709,
+         NLT_LogCv2 = NLT_Rec709 + 8, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
+         NLT_LogCv3 = NLT_LogCv2 + 11, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
+         NLT_LogC = NLT_LogCv3,
+         NLT_Cineon = NLT_LogCv3 + 4
+      };
+
+      enum LogCExposureLevel
+      {
+         EL_160 = -7,
+         EL_200 = -6,
+         EL_250 = -5,
+         EL_320 = -4,
+         EL_400 = -3,
+         EL_500 = -2,
+         EL_640 = -1,
+         EL_800 = 0,
+         EL_1000 = 1,
+         EL_1280 = 2,
+         EL_1600 = 3
+      };
+
+      // To use LogC gamma with el 160 -> NLT_LogC + EL_160
+      static RGB Linearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
+      static RGB Unlinearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
    };
 
    class GMATH_API ColorSpace
@@ -185,10 +193,6 @@ namespace gmath
    // GMATH_API float Luminance(const RGB &rgb);
    GMATH_API float Intensity(const RGB &rgb);
    GMATH_API RGB Grade(const RGB &rgb, const RGB &black, const RGB &white, const RGB &lift, const RGB &gain);
-
-   // To use LogC gamma with el 160 -> NLT_LogC + EL_160
-   GMATH_API RGB Linearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
-   GMATH_API RGB Unlinearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
 
    GMATH_API Chromaticity XYZtoChromaticity(const XYZ &xyz);
    GMATH_API XYZ ChromaticityYtoXYZ(const Chromaticity &c, float Y);
