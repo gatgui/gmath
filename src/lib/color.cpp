@@ -26,10 +26,8 @@ USA.
 namespace gmath
 {
 
-const float Constants::MinVisibleWavelength = 380.0f;
-const float Constants::MaxVisibleWavelength = 780.0f;
-const float Constants::WavelengthStep = 5.0f;
-const float Constants::CIEStdObs1931[81][3] = {
+const float StandardObserver::CIE1931[81][3] =
+{
   {0.001368f, 0.000039f, 0.006450f},
   {0.002236f, 0.000064f, 0.010550f},
   {0.004243f, 0.000120f, 0.020050f},
@@ -112,7 +110,9 @@ const float Constants::CIEStdObs1931[81][3] = {
   {0.000059f, 0.000021f, 0.000000f},
   {0.000042f, 0.000015f, 0.000000f}
 };
-const float Constants::CIEStdObs1964[81][3] = {
+
+const float StandardObserver::CIE1964[81][3] =
+{
   {0.000160f, 0.000017f, 0.000705f},
   {0.000662f, 0.000072f, 0.002928f},
   {0.002362f, 0.000253f, 0.010482f},
@@ -195,35 +195,343 @@ const float Constants::CIEStdObs1964[81][3] = {
   {0.000046f, 0.000018f, 0.000000f},
   {0.000033f, 0.000013f, 0.000000f}
 };
-const double Constants::SpeedOfLight = 2.99792458e8;
-const double Constants::Planck = 6.62607004e-34;
-const double Constants::Boltzmann = 1.3806485279e-23;
 
-const Matrix3 ChromaticAdaptation::VonKries( 0.40024f, 0.70760f, -0.08081f,
-                                            -0.22630f, 1.16532f,  0.04570f,
-                                             0.00000f, 0.00000f,  0.91822f);
-const Matrix3 ChromaticAdaptation::Bradford( 0.89510f,  0.26640f, -0.16140f,
-                                            -0.75020f,  1.71350f,  0.03670f,
-                                             0.03890f, -0.06850f,  1.02960f);
-const Matrix3 ChromaticAdaptation::Sharp( 1.2694f, -0.0988f, -0.1706f,
-                                         -0.8364f,  1.8006f,  0.0357f,
-                                          0.0297f, -0.0315f,  1.0018f);
-const Matrix3 ChromaticAdaptation::CMCCAT2000( 0.7982f, 0.3389f, -0.1371f,
-                                              -0.5918f, 1.5512f,  0.0406f,
-                                               0.0008f, 0.2390f,  0.9753f);
-const Matrix3 ChromaticAdaptation::CAT02( 0.7328f, 0.4296f, -0.1624f,
-                                         -0.7036f, 1.6975f,  0.0061f,
-                                          0.0030f, 0.0136f,  0.9834f);
-const Matrix3 ChromaticAdaptation::XYZ(1.0f, 0.0f, 0.0f,
-                                       0.0f, 1.0f, 0.0f,
-                                       0.0f, 0.0f, 1.0f);
-const Matrix3 ChromaticAdaptation::InvVonKries(ChromaticAdaptation::VonKries.getInverse());
-const Matrix3 ChromaticAdaptation::InvBradford(ChromaticAdaptation::Bradford.getInverse());
-const Matrix3 ChromaticAdaptation::InvSharp(ChromaticAdaptation::Sharp.getInverse());
-const Matrix3 ChromaticAdaptation::InvCMCCAT2000(ChromaticAdaptation::CMCCAT2000.getInverse());
-const Matrix3 ChromaticAdaptation::InvCAT02(ChromaticAdaptation::CAT02.getInverse());
-const Matrix3 ChromaticAdaptation::InvXYZ(ChromaticAdaptation::XYZ.getInverse());
+// ---
 
+// https://en.wikipedia.org/wiki/Standard_illuminant
+const Chromaticity Chromaticity::IllumA(0.44757f, 0.40745f);
+const Chromaticity Chromaticity::IllumB(0.34842f, 0.35161f);
+const Chromaticity Chromaticity::IllumC(0.31006f, 0.31616f);
+const Chromaticity Chromaticity::IllumD50(0.34567f, 0.35850f);
+const Chromaticity Chromaticity::IllumD55(0.33242f, 0.34743f);
+const Chromaticity Chromaticity::IllumD65(0.31271f, 0.32902f);
+const Chromaticity Chromaticity::IllumD75(0.29902f, 0.31485f);
+const Chromaticity Chromaticity::IllumE(1.0f/3.0f, 1.0f/3.0f);
+
+Chromaticity::Chromaticity()
+   : x(0.0f), y(0.0f)
+{
+}
+
+Chromaticity::Chromaticity(float _x, float _y)
+   : x(_x), y(_y)
+{
+}
+
+Chromaticity::Chromaticity(const Chromaticity &rhs)
+   : x(rhs.x), y(rhs.y)
+{
+}
+
+Chromaticity& Chromaticity::operator=(const Chromaticity &rhs)
+{
+   x = rhs.x;
+   y = rhs.y;
+   return *this;
+}
+
+// ---
+
+// https://en.wikipedia.org/wiki/Rec._709
+const ColorSpace ColorSpace::Rec709("Rec. 709",
+                                    Chromaticity(0.64f, 0.33f),
+                                    Chromaticity(0.30f, 0.60f),
+                                    Chromaticity(0.15f, 0.06f),
+                                    Chromaticity::IllumD65);
+// https://en.wikipedia.org/wiki/NTSC#SMPTE_C
+const ColorSpace ColorSpace::NTSC("NTSC 1953",
+                                  Chromaticity(0.67f, 0.33f),
+                                  Chromaticity(0.21f, 0.71f),
+                                  Chromaticity(0.14f, 0.08f),
+                                  Chromaticity::IllumC);
+const ColorSpace ColorSpace::SMPTE("SMPTE C",
+                                   Chromaticity(0.63f, 0.34f),
+                                   Chromaticity(0.31f, 0.595f),
+                                   Chromaticity(0.155f, 0.07f),
+                                   Chromaticity::IllumD65);
+// https://en.wikipedia.org/wiki/RGB_color_space
+// http://www.brucelindbloom.com/index.html?WorkingSpaceInfo.html
+// http://linuxtv.org/downloads/v4l-dvb-apis/ch02s06.html
+// http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
+// https://en.wikipedia.org/wiki/Wide-gamut_RGB_color_space
+// http://www.vocas.nl/webfm_send/964
+const ColorSpace ColorSpace::CIE("CIE RGB",
+                                 Chromaticity(0.7347f, 0.2653f),
+                                 Chromaticity(0.2738f, 0.7174f),
+                                 Chromaticity(0.1666f, 0.0089f),
+                                 Chromaticity::IllumE);
+const ColorSpace ColorSpace::UHDTV("UHDTV",
+                                   Chromaticity(0.708f, 0.292f),
+                                   Chromaticity(0.17f, 0.797f),
+                                   Chromaticity(0.131f, 0.046f),
+                                   Chromaticity::IllumD65);
+const ColorSpace ColorSpace::DCIP3("DCI-P3",
+                                   Chromaticity(0.68f, 0.32f),
+                                   Chromaticity(0.265f, 0.69f),
+                                   Chromaticity(0.15f, 0.06f),
+                                   Chromaticity(0.314f, 0.351f));
+const ColorSpace ColorSpace::AdobeWide("Adobe Wide Gamut RGB",
+                                       Chromaticity(0.7347f, 0.2653f),
+                                       Chromaticity(0.1152f, 0.8264f),
+                                       Chromaticity(0.1566f, 0.0177f),
+                                       Chromaticity::IllumD50);
+const ColorSpace ColorSpace::AlexaWide("ALEXA Wide Gamut RGB",
+                                       Chromaticity(0.6840f,  0.313f),
+                                       Chromaticity(0.2210f,  0.848f),
+                                       Chromaticity(0.0861f, -0.102f),
+                                       Chromaticity::IllumD65);
+const ColorSpace ColorSpace::AdobeRGB("Adobe RGB",
+                                      Chromaticity(0.64f, 0.33f),
+                                      Chromaticity(0.21f, 0.71f),
+                                      Chromaticity(0.15f, 0.06f),
+                                      Chromaticity::IllumD65);
+
+// https://en.wikipedia.org/wiki/YUV
+static const float Umax = 0.436f;
+static const float Vmax = 0.615f;
+
+ColorSpace::ColorSpace(const char *name,
+                       const Chromaticity &r,
+                       const Chromaticity &g,
+                       const Chromaticity &b,
+                       const Chromaticity &w)
+   : mName(name)
+   , mRed(r)
+   , mGreen(g)
+   , mBlue(b)
+   , mWhite(w)
+{
+   Vector3 X(r.x, r.y, 1.0f - (r.x + r.y));
+   Vector3 Y(g.x, g.y, 1.0f - (g.x + g.y));
+   Vector3 Z(b.x, b.y, 1.0f - (b.x + b.y));
+   Vector3 W(w.x, w.y, 1.0f - (w.x + w.y));
+
+   mRGBtoXYZ.setColumn(0, X);
+   mRGBtoXYZ.setColumn(1, Y);
+   mRGBtoXYZ.setColumn(2, Z);
+
+   W /= w.y;
+
+   Vector3 scl = mRGBtoXYZ.getInverse() * W;
+
+   mRGBtoXYZ.setColumn(0, scl.x * mRGBtoXYZ.getColumn(0));
+   mRGBtoXYZ.setColumn(1, scl.y * mRGBtoXYZ.getColumn(1));
+   mRGBtoXYZ.setColumn(2, scl.z * mRGBtoXYZ.getColumn(2));
+
+   mXYZtoRGB = mRGBtoXYZ.getInverse();
+}
+
+ColorSpace::ColorSpace(const ColorSpace &rhs)
+   : mName(rhs.mName)
+   , mRed(rhs.mRed)
+   , mGreen(rhs.mGreen)
+   , mBlue(rhs.mBlue)
+   , mWhite(rhs.mWhite)
+   , mXYZtoRGB(rhs.mXYZtoRGB)
+   , mRGBtoXYZ(rhs.mRGBtoXYZ)
+{
+}
+
+ColorSpace& ColorSpace::operator=(const ColorSpace &rhs)
+{
+   if (this != &rhs)
+   {
+      mName = rhs.mName;
+      mRed = rhs.mRed;
+      mGreen = rhs.mGreen;
+      mBlue = rhs.mBlue;
+      mWhite = rhs.mWhite;
+      mXYZtoRGB = rhs.mXYZtoRGB;
+      mRGBtoXYZ = rhs.mRGBtoXYZ;
+   }
+   return *this;
+}
+
+float ColorSpace::luminance(const RGB &rgb) const
+{
+   XYZ xyz = RGBtoXYZ(rgb);
+   return xyz.y;
+}
+
+XYZ ColorSpace::RGBtoXYZ(const RGB &rgb) const
+{
+   return XYZ(mRGBtoXYZ * Vector3(rgb));
+}
+
+RGB ColorSpace::XYZtoRGB(const XYZ &xyz) const
+{
+   return RGB(mXYZtoRGB * Vector3(xyz));
+}
+
+YUV ColorSpace::RGBtoYUV(const RGB &rgb) const
+{
+   YUV yuv;
+
+   float Wr = mRGBtoXYZ(1, 0);
+   float Wg = mRGBtoXYZ(1, 1);
+   float Wb = mRGBtoXYZ(1, 2);
+
+   yuv.y = Wr * rgb.r + Wg * rgb.g + Wb * rgb.b; // = luminance(rgb)
+   yuv.u = Umax * (rgb.b - yuv.y) / (1.0f - Wb);
+   yuv.v = Vmax * (rgb.r - yuv.y) / (1.0f - Wr);
+
+   return yuv;
+}
+
+RGB ColorSpace::YUVtoRGB(const YUV &yuv) const
+{
+   RGB rgb;
+
+   float Wr = mRGBtoXYZ(1, 0);
+   float Wg = mRGBtoXYZ(1, 1);
+   float Wb = mRGBtoXYZ(1, 2);
+   float invWg = 1.0f / Wg;
+   float utmp = yuv.u * (1.0f - Wb) / Umax;
+   float vtmp = yuv.v * (1.0f - Wr) / Vmax;
+
+   rgb.r = yuv.y + vtmp;
+   rgb.g = yuv.y - invWg * (Wb * utmp + Wr * vtmp);
+   rgb.b = yuv.y + utmp;
+
+   return rgb;
+}
+
+const std::string& ColorSpace::getName() const
+{
+   return mName;
+}
+
+const Matrix3& ColorSpace::getXYZtoRGBMatrix() const
+{
+   return mXYZtoRGB;
+}
+
+const Matrix3& ColorSpace::getRGBtoXYZMatrix() const
+{
+   return mRGBtoXYZ;
+}
+
+void ColorSpace::getPrimaries(Chromaticity &r, Chromaticity &g, Chromaticity &b) const
+{
+   r = mRed;
+   g = mGreen;
+   b = mBlue;
+}
+
+const Chromaticity ColorSpace::getWhitePoint() const
+{
+   return mWhite;
+}
+
+// ---
+
+class BlackbodyColor
+{
+public:
+   BlackbodyColor(int maxTemp=20000)
+   {
+      int evi = 0;
+      char *ev = 0;
+
+      ev = getenv("GMATH_BLACKBODY_STDOBS1964");
+      mUseObs1964 = (ev && sscanf(ev, "%d", &evi) == 1 && evi != 0);
+
+      ev = getenv("GMATH_BLACKBODY_CACHE");
+      if (!ev || (sscanf(ev, "%d", &evi) == 1 && evi != 0))
+      {
+         ev = getenv("GMATH_BLACKBODY_CACHE_MAX_TEMPERATURE");
+
+         if (ev && sscanf(ev, "%d", &evi) == 1 && evi >= 0)
+         {
+            maxTemp = evi;
+         }
+
+         mCount = maxTemp + 1;
+         mValues = new XYZ[mCount];
+
+         for (int i=0; i<mCount; ++i)
+         {
+            Blackbody bb((float)i);
+            mValues[i] = IntegrateVisibleSpectrum(bb, (mUseObs1964 ? StandardObserver::CIE1964 : StandardObserver::CIE1931));
+         }
+      }
+      else
+      {
+         mCount = 0;
+         mValues = 0;
+      }
+   }
+
+   ~BlackbodyColor()
+   {
+      if (mValues)
+      {
+         delete[] mValues;
+      }
+   }
+
+   XYZ operator()(float temp)
+   {
+      int idx = int(temp);
+      if (idx < 0 || idx >= mCount)
+      {
+         // value not cached, compute it
+         Blackbody bb(temp);
+         return IntegrateVisibleSpectrum(bb, (mUseObs1964 ? StandardObserver::CIE1964 : StandardObserver::CIE1931));
+      }
+      else
+      {
+         return mValues[idx];
+      }
+   }
+
+private:
+
+   int mCount;
+   XYZ *mValues;
+   bool mUseObs1964;
+};
+
+static BlackbodyColor BBC;
+static const double SpeedOfLight = 2.99792458e8;
+static const double Planck = 6.62607004e-34;
+static const double Boltzmann = 1.3806485279e-23;
+
+Blackbody::Blackbody(float t)
+   : temperature(t)
+{
+}
+
+float Blackbody::operator()(float lambda) const
+{
+   // https://en.wikipedia.org/wiki/Planck%27s_law
+   static double c1 = 2 * M_PI * Planck * SpeedOfLight * SpeedOfLight;
+   static double c2 = Planck * SpeedOfLight / Boltzmann;
+
+   // c1 = 3.746914726083474e-16
+   // c2 = 1.4387773455951101e-2
+
+   double l = double(lambda) * 1e-9;
+
+   return float(c1 * pow(l, -5) / (exp(c2 / (l * temperature)) - 1));
+}
+
+XYZ Blackbody::GetXYZ(float temp)
+{
+   return BBC(temp);
+}
+
+Chromaticity Blackbody::GetChromaticity(float temp)
+{
+   return XYZtoChromaticity(BBC(temp));
+}
+
+RGB Blackbody::GetRGB(float temp, const ColorSpace &cs)
+{
+   return cs.XYZtoRGB(BBC(temp)).ceil(0.0f);
+}
+
+// ---
 
 float Chroma(const RGB &rgb)
 {
@@ -501,23 +809,48 @@ RGB RGBAtoRGB(const RGBA &rgba, bool premult)
    return rgb;
 }
 
+static const Matrix3 CAM_VonKries( 0.40024f, 0.70760f, -0.08081f,
+                                  -0.22630f, 1.16532f,  0.04570f,
+                                   0.00000f, 0.00000f,  0.91822f);
+static const Matrix3 CAM_Bradford( 0.89510f,  0.26640f, -0.16140f,
+                                  -0.75020f,  1.71350f,  0.03670f,
+                                   0.03890f, -0.06850f,  1.02960f);
+static const Matrix3 CAM_Sharp( 1.2694f, -0.0988f, -0.1706f,
+                               -0.8364f,  1.8006f,  0.0357f,
+                                0.0297f, -0.0315f,  1.0018f);
+static const Matrix3 CAM_CMCCAT2000( 0.7982f, 0.3389f, -0.1371f,
+                                    -0.5918f, 1.5512f,  0.0406f,
+                                     0.0008f, 0.2390f,  0.9753f);
+static const Matrix3 CAM_CAT02( 0.7328f, 0.4296f, -0.1624f,
+                               -0.7036f, 1.6975f,  0.0061f,
+                                0.0030f, 0.0136f,  0.9834f);
+static const Matrix3 CAM_XYZ(1.0f, 0.0f, 0.0f,
+                             0.0f, 1.0f, 0.0f,
+                             0.0f, 0.0f, 1.0f);
+static const Matrix3 CAM_InvVonKries(CAM_VonKries.getInverse());
+static const Matrix3 CAM_InvBradford(CAM_Bradford.getInverse());
+static const Matrix3 CAM_InvSharp(CAM_Sharp.getInverse());
+static const Matrix3 CAM_InvCMCCAT2000(CAM_CMCCAT2000.getInverse());
+static const Matrix3 CAM_InvCAT02(CAM_CAT02.getInverse());
+static const Matrix3 CAM_InvXYZ(CAM_XYZ.getInverse());
+
 LMS XYZtoLMS(const XYZ &xyz, ChromaticAdaptationTransform cat)
 {
    switch (cat)
    {
    case CAT_VonKries:
-      return LMS(ChromaticAdaptation::VonKries * Vector3(xyz));
+      return LMS(CAM_VonKries * Vector3(xyz));
    case CAT_Bradford:
-      return LMS(ChromaticAdaptation::Bradford * Vector3(xyz));
+      return LMS(CAM_Bradford * Vector3(xyz));
    case CAT_Sharp:
-      return LMS(ChromaticAdaptation::Sharp * Vector3(xyz));
+      return LMS(CAM_Sharp * Vector3(xyz));
    case CAT_CMC2000:
-      return LMS(ChromaticAdaptation::CMCCAT2000 * Vector3(xyz));
+      return LMS(CAM_CMCCAT2000 * Vector3(xyz));
    case CAT_02:
-      return LMS(ChromaticAdaptation::CAT02 * Vector3(xyz));
+      return LMS(CAM_CAT02 * Vector3(xyz));
    case CAT_XYZ:
    default:
-      return LMS(ChromaticAdaptation::XYZ * Vector3(xyz));
+      return LMS(CAM_XYZ * Vector3(xyz));
    }
 }
 
@@ -526,22 +859,22 @@ XYZ LMStoXYZ(const LMS &lms, ChromaticAdaptationTransform cat)
    switch (cat)
    {
    case CAT_VonKries:
-      return XYZ(ChromaticAdaptation::InvVonKries * Vector3(lms));
+      return XYZ(CAM_InvVonKries * Vector3(lms));
    case CAT_Bradford:
-      return XYZ(ChromaticAdaptation::InvBradford * Vector3(lms));
+      return XYZ(CAM_InvBradford * Vector3(lms));
    case CAT_Sharp:
-      return XYZ(ChromaticAdaptation::InvSharp * Vector3(lms));
+      return XYZ(CAM_InvSharp * Vector3(lms));
    case CAT_CMC2000:
-      return XYZ(ChromaticAdaptation::InvCMCCAT2000 * Vector3(lms));
+      return XYZ(CAM_InvCMCCAT2000 * Vector3(lms));
    case CAT_02:
-      return XYZ(ChromaticAdaptation::InvCAT02 * Vector3(lms));
+      return XYZ(CAM_InvCAT02 * Vector3(lms));
    case CAT_XYZ:
    default:
-      return XYZ(ChromaticAdaptation::InvXYZ * Vector3(lms));
+      return XYZ(CAM_InvXYZ * Vector3(lms));
    }
 }
 
-GMATH_API Matrix3 ChromaticAdaptationMatrix(const XYZ &from, const XYZ &to, ChromaticAdaptationTransform cat)
+Matrix3 ChromaticAdaptationMatrix(const XYZ &from, const XYZ &to, ChromaticAdaptationTransform cat)
 {
    LMS scl = XYZtoLMS(to, cat) / XYZtoLMS(from, cat);
 
@@ -552,18 +885,18 @@ GMATH_API Matrix3 ChromaticAdaptationMatrix(const XYZ &from, const XYZ &to, Chro
    switch (cat)
    {
    case CAT_VonKries:
-      return ChromaticAdaptation::InvVonKries * diag * ChromaticAdaptation::VonKries;
+      return CAM_InvVonKries * diag * CAM_VonKries;
    case CAT_Bradford:
-      return ChromaticAdaptation::InvBradford * diag * ChromaticAdaptation::Bradford;
+      return CAM_InvBradford * diag * CAM_Bradford;
    case CAT_Sharp:
-      return ChromaticAdaptation::InvSharp * diag * ChromaticAdaptation::Sharp;
+      return CAM_InvSharp * diag * CAM_Sharp;
    case CAT_CMC2000:
-      return ChromaticAdaptation::InvCMCCAT2000 * diag * ChromaticAdaptation::CMCCAT2000;
+      return CAM_InvCMCCAT2000 * diag * CAM_CMCCAT2000;
    case CAT_02:
-      return ChromaticAdaptation::InvCAT02 * diag * ChromaticAdaptation::CAT02;
+      return CAM_InvCAT02 * diag * CAM_CAT02;
    case CAT_XYZ:
    default:
-      return ChromaticAdaptation::InvXYZ * diag * ChromaticAdaptation::XYZ;
+      return CAM_InvXYZ * diag * CAM_XYZ;
    }
 }
 
@@ -579,7 +912,8 @@ struct LogCParams
    float ecut_f; // e * cut + f
 };
 
-static const LogCParams LogCv2_params[11] = {
+static const LogCParams LogCv2_params[11] =
+{
    {0.000000f, 5.061087f, 0.089004f, 0.269035f, 0.391007f, 6.332427f, 0.108361f, 0.108361f},
    {0.000000f, 5.061087f, 0.089004f, 0.266007f, 0.391007f, 6.189953f, 0.111543f, 0.111543f},
    {0.000000f, 5.061087f, 0.089004f, 0.262978f, 0.391007f, 6.034414f, 0.114725f, 0.114725f},
@@ -593,7 +927,8 @@ static const LogCParams LogCv2_params[11] = {
    {0.000000f, 5.061087f, 0.089004f, 0.237781f, 0.391007f, 4.070466f, 0.141197f, 0.141197f}
 };
 
-static const LogCParams LogCv3_params[11] = {
+static const LogCParams LogCv3_params[11] =
+{
    {0.005561f, 5.555556f, 0.080216f, 0.269036f, 0.381991f, 5.842037f, 0.092778f, 0.125266f},
    {0.006208f, 5.555556f, 0.076621f, 0.266007f, 0.382478f, 5.776265f, 0.092782f, 0.128643f},
    {0.006871f, 5.555556f, 0.072941f, 0.262978f, 0.382966f, 5.710494f, 0.092786f, 0.132021f},
@@ -758,17 +1093,6 @@ RGB Unlinearize(const RGB &c, NonLinearTransform nlt)
    return rgb;
 }
 
-
-// https://en.wikipedia.org/wiki/Standard_illuminant
-const Chromaticity Chromaticity::IllumA(0.44757f, 0.40745f);
-const Chromaticity Chromaticity::IllumB(0.34842f, 0.35161f);
-const Chromaticity Chromaticity::IllumC(0.31006f, 0.31616f);
-const Chromaticity Chromaticity::IllumD50(0.34567f, 0.35850f);
-const Chromaticity Chromaticity::IllumD55(0.33242f, 0.34743f);
-const Chromaticity Chromaticity::IllumD65(0.31271f, 0.32902f);
-const Chromaticity Chromaticity::IllumD75(0.29902f, 0.31485f);
-const Chromaticity Chromaticity::IllumE(1.0f/3.0f, 1.0f/3.0f);
-
 Chromaticity XYZtoChromaticity(const XYZ &xyz)
 {
    float isum = 1.0f / (xyz.x + xyz.y + xyz.z);
@@ -786,275 +1110,6 @@ XYZ ChromaticityYtoXYZ(const Chromaticity &c, float Y)
    rv.z = Y * iy * (1.0f - c.x - c.y);
 
    return rv;
-}
-
-
-// https://en.wikipedia.org/wiki/Rec._709
-const ColorSpace ColorSpace::Rec709("Rec. 709",
-                                    Chromaticity(0.64f, 0.33f),
-                                    Chromaticity(0.30f, 0.60f),
-                                    Chromaticity(0.15f, 0.06f),
-                                    Chromaticity::IllumD65);
-// https://en.wikipedia.org/wiki/NTSC#SMPTE_C
-const ColorSpace ColorSpace::NTSC("NTSC 1953",
-                                  Chromaticity(0.67f, 0.33f),
-                                  Chromaticity(0.21f, 0.71f),
-                                  Chromaticity(0.14f, 0.08f),
-                                  Chromaticity::IllumC);
-const ColorSpace ColorSpace::SMPTE("SMPTE C",
-                                   Chromaticity(0.63f, 0.34f),
-                                   Chromaticity(0.31f, 0.595f),
-                                   Chromaticity(0.155f, 0.07f),
-                                   Chromaticity::IllumD65);
-// https://en.wikipedia.org/wiki/RGB_color_space
-// http://www.brucelindbloom.com/index.html?WorkingSpaceInfo.html
-// http://linuxtv.org/downloads/v4l-dvb-apis/ch02s06.html
-// http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
-// https://en.wikipedia.org/wiki/Wide-gamut_RGB_color_space
-// http://www.vocas.nl/webfm_send/964
-const ColorSpace ColorSpace::CIE("CIE RGB",
-                                 Chromaticity(0.7347f, 0.2653f),
-                                 Chromaticity(0.2738f, 0.7174f),
-                                 Chromaticity(0.1666f, 0.0089f),
-                                 Chromaticity::IllumE);
-const ColorSpace ColorSpace::UHDTV("UHDTV",
-                                   Chromaticity(0.708f, 0.292f),
-                                   Chromaticity(0.17f, 0.797f),
-                                   Chromaticity(0.131f, 0.046f),
-                                   Chromaticity::IllumD65);
-const ColorSpace ColorSpace::DCIP3("DCI-P3",
-                                   Chromaticity(0.68f, 0.32f),
-                                   Chromaticity(0.265f, 0.69f),
-                                   Chromaticity(0.15f, 0.06f),
-                                   Chromaticity(0.314f, 0.351f));
-const ColorSpace ColorSpace::AdobeWide("Adobe Wide Gamut RGB",
-                                       Chromaticity(0.7347f, 0.2653f),
-                                       Chromaticity(0.1152f, 0.8264f),
-                                       Chromaticity(0.1566f, 0.0177f),
-                                       Chromaticity::IllumD50);
-const ColorSpace ColorSpace::AlexaWide("ALEXA Wide Gamut RGB",
-                                       Chromaticity(0.6840f,  0.313f),
-                                       Chromaticity(0.2210f,  0.848f),
-                                       Chromaticity(0.0861f, -0.102f),
-                                       Chromaticity::IllumD65);
-const ColorSpace ColorSpace::AdobeRGB("Adobe RGB",
-                                      Chromaticity(0.64f, 0.33f),
-                                      Chromaticity(0.21f, 0.71f),
-                                      Chromaticity(0.15f, 0.06f),
-                                      Chromaticity::IllumD65);
-
-ColorSpace::ColorSpace(const char *name,
-                       const Chromaticity &r,
-                       const Chromaticity &g,
-                       const Chromaticity &b,
-                       const Chromaticity &w)
-   : mName(name)
-   , mRed(r)
-   , mGreen(g)
-   , mBlue(b)
-   , mWhite(w)
-{
-   Vector3 X(r.x, r.y, 1.0f - (r.x + r.y));
-   Vector3 Y(g.x, g.y, 1.0f - (g.x + g.y));
-   Vector3 Z(b.x, b.y, 1.0f - (b.x + b.y));
-   Vector3 W(w.x, w.y, 1.0f - (w.x + w.y));
-
-   mRGBtoXYZ.setColumn(0, X);
-   mRGBtoXYZ.setColumn(1, Y);
-   mRGBtoXYZ.setColumn(2, Z);
-
-   W /= w.y;
-
-   Vector3 scl = mRGBtoXYZ.getInverse() * W;
-
-   mRGBtoXYZ.setColumn(0, scl.x * mRGBtoXYZ.getColumn(0));
-   mRGBtoXYZ.setColumn(1, scl.y * mRGBtoXYZ.getColumn(1));
-   mRGBtoXYZ.setColumn(2, scl.z * mRGBtoXYZ.getColumn(2));
-
-   mXYZtoRGB = mRGBtoXYZ.getInverse();
-}
-
-ColorSpace::ColorSpace(const ColorSpace &rhs)
-   : mName(rhs.mName)
-   , mRed(rhs.mRed)
-   , mGreen(rhs.mGreen)
-   , mBlue(rhs.mBlue)
-   , mWhite(rhs.mWhite)
-   , mXYZtoRGB(rhs.mXYZtoRGB)
-   , mRGBtoXYZ(rhs.mRGBtoXYZ)
-{
-}
-
-ColorSpace& ColorSpace::operator=(const ColorSpace &rhs)
-{
-   if (this != &rhs)
-   {
-      mName = rhs.mName;
-      mRed = rhs.mRed;
-      mGreen = rhs.mGreen;
-      mBlue = rhs.mBlue;
-      mWhite = rhs.mWhite;
-      mXYZtoRGB = rhs.mXYZtoRGB;
-      mRGBtoXYZ = rhs.mRGBtoXYZ;
-   }
-   return *this;
-}
-
-float ColorSpace::luminance(const RGB &rgb) const
-{
-   XYZ xyz = RGBtoXYZ(rgb);
-   return xyz.y;
-}
-
-XYZ ColorSpace::RGBtoXYZ(const RGB &rgb) const
-{
-   return XYZ(mRGBtoXYZ * Vector3(rgb));
-}
-
-RGB ColorSpace::XYZtoRGB(const XYZ &xyz) const
-{
-   return RGB(mXYZtoRGB * Vector3(xyz));
-}
-
-// https://en.wikipedia.org/wiki/YUV
-static const float Umax = 0.436f;
-static const float Vmax = 0.615f;
-
-YUV ColorSpace::RGBtoYUV(const RGB &rgb) const
-{
-   YUV yuv;
-
-   float Wr = mRGBtoXYZ(1, 0);
-   float Wg = mRGBtoXYZ(1, 1);
-   float Wb = mRGBtoXYZ(1, 2);
-
-   yuv.y = Wr * rgb.r + Wg * rgb.g + Wb * rgb.b; // = luminance(rgb)
-   yuv.u = Umax * (rgb.b - yuv.y) / (1.0f - Wb);
-   yuv.v = Vmax * (rgb.r - yuv.y) / (1.0f - Wr);
-
-   return yuv;
-}
-
-RGB ColorSpace::YUVtoRGB(const YUV &yuv) const
-{
-   RGB rgb;
-
-   float Wr = mRGBtoXYZ(1, 0);
-   float Wg = mRGBtoXYZ(1, 1);
-   float Wb = mRGBtoXYZ(1, 2);
-   float invWg = 1.0f / Wg;
-   float utmp = yuv.u * (1.0f - Wb) / Umax;
-   float vtmp = yuv.v * (1.0f - Wr) / Vmax;
-
-   rgb.r = yuv.y + vtmp;
-   rgb.g = yuv.y - invWg * (Wb * utmp + Wr * vtmp);
-   rgb.b = yuv.y + utmp;
-
-   return rgb;
-}
-
-
-Blackbody::Blackbody(float t)
-   : temperature(t)
-{
-}
-
-float Blackbody::operator()(float lambda) const
-{
-   // https://en.wikipedia.org/wiki/Planck%27s_law
-   static double c1 = 2 * M_PI * Constants::Planck * Constants::SpeedOfLight * Constants::SpeedOfLight;
-   static double c2 = Constants::Planck * Constants::SpeedOfLight / Constants::Boltzmann;
-
-   // c1 = 3.746914726083474e-16
-   // c2 = 1.4387773455951101e-2
-
-   double l = double(lambda) * 1e-9;
-
-   return float(c1 * pow(l, -5) / (exp(c2 / (l * temperature)) - 1));
-}
-
-class BlackbodyColor
-{
-public:
-   BlackbodyColor(int maxTemp=20000)
-   {
-      int evi = 0;
-      char *ev = 0;
-
-      ev = getenv("GMATH_BLACKBODY_STDOBS1964");
-      mUseObs1964 = (ev && sscanf(ev, "%d", &evi) == 1 && evi != 0);
-
-      ev = getenv("GMATH_BLACKBODY_CACHE");
-      if (!ev || (sscanf(ev, "%d", &evi) == 1 && evi != 0))
-      {
-         ev = getenv("GMATH_BLACKBODY_CACHE_MAX_TEMPERATURE");
-
-         if (ev && sscanf(ev, "%d", &evi) == 1 && evi >= 0)
-         {
-            maxTemp = evi;
-         }
-
-         mCount = maxTemp + 1;
-         mValues = new XYZ[mCount];
-
-         for (int i=0; i<mCount; ++i)
-         {
-            Blackbody bb((float)i);
-            mValues[i] = IntegrateVisibleSpectrum(bb, (mUseObs1964 ? Constants::CIEStdObs1964 : Constants::CIEStdObs1931));
-         }
-      }
-      else
-      {
-         mCount = 0;
-         mValues = 0;
-      }
-   }
-
-   ~BlackbodyColor()
-   {
-      if (mValues)
-      {
-         delete[] mValues;
-      }
-   }
-
-   XYZ operator()(float temp)
-   {
-      int idx = int(temp);
-      if (idx < 0 || idx >= mCount)
-      {
-         // value not cached, compute it
-         Blackbody bb(temp);
-         return IntegrateVisibleSpectrum(bb, (mUseObs1964 ? Constants::CIEStdObs1964 : Constants::CIEStdObs1931));
-      }
-      else
-      {
-         return mValues[idx];
-      }
-   }
-
-private:
-
-   int mCount;
-   XYZ *mValues;
-   bool mUseObs1964;
-};
-
-static BlackbodyColor BBC;
-
-XYZ Blackbody::GetXYZ(float temp)
-{
-   return BBC(temp);
-}
-
-Chromaticity Blackbody::GetChromaticity(float temp)
-{
-   return XYZtoChromaticity(BBC(temp));
-}
-
-RGB Blackbody::GetRGB(float temp, const ColorSpace &cs)
-{
-   return cs.XYZtoRGB(BBC(temp)).ceil(0.0f);
 }
 
 } // namespace gmath
