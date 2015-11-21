@@ -721,9 +721,30 @@ Chromaticity Blackbody::GetChromaticity(float temp)
    return XYZtoChromaticity(BBC(temp));
 }
 
-RGB Blackbody::GetRGB(float temp, const ColorSpace &cs)
+RGB Blackbody::GetRGB(float temp, const ColorSpace &cs, bool normalize)
 {
-   return cs.XYZtoRGB(BBC(temp)).ceil(0.0f);
+   //return cs.XYZtoRGB(BBC(temp)).ceil(0.0f);
+   RGB out = cs.XYZtoRGB(BBC(temp));
+
+   float w = -std::min(0.0f, std::min(out.r, std::min(out.g, out.b)));
+   if (w > 0.0f)
+   {
+      // out lies outside of the target color gamut
+      out.r += w;
+      out.g += w;
+      out.b += w;
+   }
+
+   if (normalize)
+   {
+      float M = std::max(out.r, std::max(out.g, out.b));
+      if (M > 0.0f)
+      {
+         out /= M;
+      }
+   }
+
+   return out;
 }
 
 // ---

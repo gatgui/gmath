@@ -85,7 +85,7 @@ int main(int, char**)
       std::cout << w << " -> " << rv << " (chromaticity: " << c.x << ", " << c.y << ") -> " << rv2 << std::endl;
    }
 
-   for (float temp=1000.0f; temp<=5000.0f; temp+=1000.0f)
+   for (float temp=1000.0f; temp<=10000.0f; temp+=500.0f)
    {
       std::cout << "Color temperature " << temp << " = xyz=" << Blackbody::GetXYZ(temp) << ", rgb=" << Blackbody::GetRGB(temp, ColorSpace::Rec709) << ", chromaticity=" << Blackbody::GetChromaticity(temp) << std::endl;
    }
