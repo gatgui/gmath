@@ -173,8 +173,18 @@ namespace gmath
 
       float temperature;
 
-      static Chromaticity GetChromaticity(float temp);
+      // Note: Using Blackbody::GetXYZ rather than IntegrateVisibleSpectrum(Blackbody(temp))
+      //       enables the use of a cache (1K steps)
+      //   The following environment variable controls the caching
+      //     GMATH_BLACKBODY_CACHE: enables blackbody cache (0 or 1, 1 by default)
+      //     GMATH_BLACKBODY_CACHE_MAX_TEMPERATURE: set the cache max temperature (20000 by default)
+      //   Additionally
+      //     GMATH_BLACKBODY_STDOBS1964: set to 1 to use CIE Standard Observer 1964 rather than 1931
       static XYZ GetXYZ(float temp);
+
+      // Note: Using Blackbody::GetRGB rather than ColorSpace::XYZtoRGB(Blackbody::GetXYZ())
+      //       will remap out of gamut colors (uniform color shifting) and gives you the option
+      //       to normalize the color to a human visible range
       static RGB GetRGB(float temp, const ColorSpace &cs, bool normalize=true);
    };
 
@@ -204,24 +214,25 @@ namespace gmath
    template <class SpectralPowerDensityFunc>
    XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd, const float stdobs[81][3]=0)
    {
-      XYZ rv;
-      float lambda = 380.0f;
-
       if (stdobs == 0)
       {
          stdobs = StandardObserver::CIE1931;
       }
 
-      // Integrate from 380nm to 780nm by step of 5nm
-      for (int i=0; i<81; ++i, lambda+=5.0f)
+      // Using composite trapezoidal rule to integrate over 80 intervals of 5nm.
+
+      // Add first and last sample contributions
+      XYZ rv = 0.5f * (spd(380.0f) * XYZ(stdobs[0]) + spd(780.0f) * XYZ(stdobs[80]));
+
+      // Sum contributions from 385nm to 775nm
+      float lambda = 385.0f;
+      for (int i=1; i<80; ++i, lambda+=5.0f)
       {
-         float p = spd(lambda);
-         rv.x += p * stdobs[i][0];
-         rv.y += p * stdobs[i][1];
-         rv.z += p * stdobs[i][2];
+         rv += spd(lambda) * XYZ(stdobs[i]);
       }
 
-      rv /= (rv.x + rv.y + rv.z);
+      // Multiply by interval length in meters
+      rv *= 5e-9f;
 
       return rv;
    }

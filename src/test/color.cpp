@@ -87,7 +87,13 @@ int main(int, char**)
 
    for (float temp=1000.0f; temp<=10000.0f; temp+=500.0f)
    {
-      std::cout << "Color temperature " << temp << " = xyz=" << Blackbody::GetXYZ(temp) << ", rgb=" << Blackbody::GetRGB(temp, ColorSpace::Rec709) << ", chromaticity=" << Blackbody::GetChromaticity(temp) << std::endl;
+      XYZ xyz = Blackbody::GetXYZ(temp);
+
+      std::cout << "Color temperature " << temp << std::endl;
+      std::cout << "  xyz: " << xyz << std::endl;
+      std::cout << "  rgb: " << Blackbody::GetRGB(temp, ColorSpace::Rec709, false) << std::endl;
+      std::cout << "  rgb (normalized): " << Blackbody::GetRGB(temp, ColorSpace::Rec709, true) << std::endl;
+      std::cout << "  chromaticity: " << XYZtoChromaticity(temp) << std::endl;
    }
 
    XYZ D50 = ChromaticityYtoXYZ(Chromaticity::IllumD50, 1.0f);

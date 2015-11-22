@@ -716,14 +716,8 @@ XYZ Blackbody::GetXYZ(float temp)
    return BBC(temp);
 }
 
-Chromaticity Blackbody::GetChromaticity(float temp)
-{
-   return XYZtoChromaticity(BBC(temp));
-}
-
 RGB Blackbody::GetRGB(float temp, const ColorSpace &cs, bool normalize)
 {
-   //return cs.XYZtoRGB(BBC(temp)).ceil(0.0f);
    RGB out = cs.XYZtoRGB(BBC(temp));
 
    float w = -std::min(0.0f, std::min(out.r, std::min(out.g, out.b)));
