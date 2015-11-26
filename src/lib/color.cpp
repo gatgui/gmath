@@ -283,7 +283,7 @@ static const float Cineon_igain = 1.0f - powf(10.0f, (Cineon_black - Cineon_whit
 static const float Cineon_gain = 1.0f / Cineon_igain;
 static const float Cineon_offset = Cineon_gain - 1.0f;
 
-RGB Gamma::Linearize(const RGB &c, Gamma::NonLinearTransform nlt)
+RGB Gamma::Linearize(const RGB &c, Gamma::Function gf)
 {
    static float sRGBScale = 1.0f / 12.92f;
    static float Rec709Scale = 1.0f / 4.5f;
@@ -292,44 +292,44 @@ RGB Gamma::Linearize(const RGB &c, Gamma::NonLinearTransform nlt)
    RGB rgb;
    const LogCParams *lcp = 0;
 
-   if (nlt > NLT_Rec709 && nlt <= NLT_LogCv2 + EL_1600)
+   if (gf > Rec709 && gf <= LogCv2 + EL1600)
    {
-      lcp = &LogCv2_params[(nlt - NLT_LogCv2) + 7];
-      nlt = NLT_LogC;
+      lcp = &LogCv2_params[(gf - LogCv2) + 7];
+      gf = LogC;
    }
-   else if (nlt > NLT_LogCv2 + EL_1600 && nlt <= NLT_LogCv3 + EL_1600)
+   else if (gf > LogCv2 + EL1600 && gf <= LogCv3 + EL1600)
    {
-      lcp = &LogCv3_params[(nlt - NLT_LogCv3) + 7];
-      nlt = NLT_LogC;
+      lcp = &LogCv3_params[(gf - LogCv3) + 7];
+      gf = LogC;
    }
 
-   switch (nlt)
+   switch (gf)
    {
-   case NLT_Gamma22:
+   case Power22:
       // Exact Adobe RGB: 563.0 / 256.0f
       rgb.r = powf(c.r, 2.2f);
       rgb.g = powf(c.g, 2.2f);
       rgb.b = powf(c.b, 2.2f);
       break;
-   case NLT_Gamma24:
+   case Power24:
       rgb.r = powf(c.r, 2.4f);
       rgb.g = powf(c.g, 2.4f);
       rgb.b = powf(c.b, 2.4f);
       break;
-   case NLT_sRGB:
+   case sRGB:
       // https://en.wikipedia.org/wiki/SRGB
       rgb.r = c.r <= 0.04045f ? c.r * sRGBScale : powf((c.r + 0.055f) / 1.055f, 2.4f);
       rgb.g = c.g <= 0.04045f ? c.g * sRGBScale : powf((c.g + 0.055f) / 1.055f, 2.4f);
       rgb.b = c.b <= 0.04045f ? c.b * sRGBScale : powf((c.b + 0.055f) / 1.055f, 2.4f);
       break;
-   case NLT_Rec709:
+   case Rec709:
       // https://en.wikipedia.org/wiki/Rec._709
       rgb.r = c.r < 0.081f ? c.r * Rec709Scale : powf((c.r + 0.099f) / 1.099f, Rec709Power);
       rgb.g = c.g < 0.081f ? c.g * Rec709Scale : powf((c.g + 0.099f) / 1.099f, Rec709Power);
       rgb.b = c.b < 0.081f ? c.b * Rec709Scale : powf((c.b + 0.099f) / 1.099f, Rec709Power);
       break;
 
-   case NLT_LogC:
+   case LogC:
       // http://www.vocas.nl/webfm_send/964
       {
          float ia = 1.0f / lcp->a;
@@ -341,7 +341,7 @@ RGB Gamma::Linearize(const RGB &c, Gamma::NonLinearTransform nlt)
       }
       break;
 
-   case NLT_Cineon:
+   case Cineon:
       // http://www.cineon.com/conv_10to8bit.php
       // http://www.digital-intermediate.co.uk/film/pdf/Cineon.pdf
       // Note: cineon values have 1024 steps [0, 1023]
@@ -358,58 +358,58 @@ RGB Gamma::Linearize(const RGB &c, Gamma::NonLinearTransform nlt)
    return rgb;
 }
 
-RGB Gamma::Unlinearize(const RGB &c, Gamma::NonLinearTransform nlt)
+RGB Gamma::Unlinearize(const RGB &c, Gamma::Function gf)
 {
-   static float invGamma22 = 1.0f / 2.2f;
-   static float invGamma24 = 1.0f / 2.4f;
+   static float oneOver22 = 1.0f / 2.2f;
+   static float oneOver24 = 1.0f / 2.4f;
 
    RGB rgb;
    const LogCParams *lcp = 0;
 
-   if (nlt > NLT_Rec709 && nlt <= NLT_LogCv2 + EL_1600)
+   if (gf > Rec709 && gf <= LogCv2 + EL1600)
    {
-      lcp = &LogCv2_params[(nlt - NLT_LogCv2) + 7];
-      nlt = NLT_LogC;
+      lcp = &LogCv2_params[(gf - LogCv2) + 7];
+      gf = LogC;
    }
-   else if (nlt > NLT_LogCv2 + EL_1600 && nlt <= NLT_LogCv3 + EL_1600)
+   else if (gf > LogCv2 + EL1600 && gf <= LogCv3 + EL1600)
    {
-      lcp = &LogCv3_params[(nlt - NLT_LogCv3) + 7];
-      nlt = NLT_LogC;
+      lcp = &LogCv3_params[(gf - LogCv3) + 7];
+      gf = LogC;
    }
 
-   switch (nlt)
+   switch (gf)
    {
-   case NLT_Gamma22:
-      rgb.r = powf(c.r, invGamma22);
-      rgb.g = powf(c.g, invGamma22);
-      rgb.b = powf(c.b, invGamma22);
+   case Power22:
+      rgb.r = powf(c.r, oneOver22);
+      rgb.g = powf(c.g, oneOver22);
+      rgb.b = powf(c.b, oneOver22);
       break;
-   case NLT_Gamma24:
-      rgb.r = powf(c.r, invGamma24);
-      rgb.g = powf(c.g, invGamma24);
-      rgb.b = powf(c.b, invGamma24);
+   case Power24:
+      rgb.r = powf(c.r, oneOver24);
+      rgb.g = powf(c.g, oneOver24);
+      rgb.b = powf(c.b, oneOver24);
       break;
-   case NLT_sRGB:
+   case sRGB:
       // https://en.wikipedia.org/wiki/SRGB
-      rgb.r = c.r <= 0.0031308f ? 12.92f * c.r : 1.055f * powf(c.r, invGamma24) - 0.055f;
-      rgb.g = c.g <= 0.0031308f ? 12.92f * c.g : 1.055f * powf(c.g, invGamma24) - 0.055f;
-      rgb.b = c.b <= 0.0031308f ? 12.92f * c.b : 1.055f * powf(c.b, invGamma24) - 0.055f;
+      rgb.r = c.r <= 0.0031308f ? 12.92f * c.r : 1.055f * powf(c.r, oneOver24) - 0.055f;
+      rgb.g = c.g <= 0.0031308f ? 12.92f * c.g : 1.055f * powf(c.g, oneOver24) - 0.055f;
+      rgb.b = c.b <= 0.0031308f ? 12.92f * c.b : 1.055f * powf(c.b, oneOver24) - 0.055f;
       break;
-   case NLT_Rec709:
+   case Rec709:
       // https://en.wikipedia.org/wiki/Rec._709
       rgb.r = c.r < 0.018f ? 4.5f * c.r : 1.099f * powf(c.r, 0.45f) - 0.099f;
       rgb.g = c.g < 0.018f ? 4.5f * c.g : 1.099f * powf(c.g, 0.45f) - 0.099f;
       rgb.b = c.b < 0.018f ? 4.5f * c.b : 1.099f * powf(c.b, 0.45f) - 0.099f;
       break;
 
-   case NLT_LogC:
+   case LogC:
       // http://www.vocas.nl/webfm_send/964
       rgb.r = (c.r > lcp->cut ? lcp->c * log10f(lcp->a * c.r + lcp->b) + lcp->d : lcp->e * c.r + lcp->f);
       rgb.g = (c.g > lcp->cut ? lcp->c * log10f(lcp->a * c.g + lcp->b) + lcp->d : lcp->e * c.g + lcp->f);
       rgb.b = (c.b > lcp->cut ? lcp->c * log10f(lcp->a * c.b + lcp->b) + lcp->d : lcp->e * c.b + lcp->f);
       break;
 
-   case NLT_Cineon:
+   case Cineon:
       // http://www.cineon.com/conv_10to8bit.php
       // http://www.digital-intermediate.co.uk/film/pdf/Cineon.pdf
       // Note: cineon values have 1024 steps [0, 1023]

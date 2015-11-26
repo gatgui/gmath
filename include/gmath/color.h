@@ -81,36 +81,37 @@ namespace gmath
    class GMATH_API Gamma
    {
    public:
-      enum NonLinearTransform
+      enum Function
       {
-         NLT_Gamma22 = 0,
-         NLT_Gamma24,
-         NLT_sRGB,
-         NLT_Rec709,
-         NLT_LogCv2 = NLT_Rec709 + 8, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
-         NLT_LogCv3 = NLT_LogCv2 + 11, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
-         NLT_LogC = NLT_LogCv3,
-         NLT_Cineon = NLT_LogCv3 + 4
+         Power22 = 0,
+         Power24,
+         sRGB,
+         Rec709,
+         LogCv2 = Rec709 + 8, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
+         LogCv3 = LogCv2 + 11, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
+         LogC = LogCv3,
+         Cineon = LogCv3 + 4
+      };
+      
+      // LogC exposure levels
+      enum ExposureLevel
+      {
+         EL160 = -7,
+         EL200 = -6,
+         EL250 = -5,
+         EL320 = -4,
+         EL400 = -3,
+         EL500 = -2,
+         EL640 = -1,
+         EL800 = 0,
+         EL1000 = 1,
+         EL1280 = 2,
+         EL1600 = 3
       };
 
-      enum LogCExposureLevel
-      {
-         EL_160 = -7,
-         EL_200 = -6,
-         EL_250 = -5,
-         EL_320 = -4,
-         EL_400 = -3,
-         EL_500 = -2,
-         EL_640 = -1,
-         EL_800 = 0,
-         EL_1000 = 1,
-         EL_1280 = 2,
-         EL_1600 = 3
-      };
-
-      // To use LogC gamma with el 160 -> NLT_LogC + EL_160
-      static RGB Linearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
-      static RGB Unlinearize(const RGB &c, NonLinearTransform nlt=NLT_sRGB);
+      // To use LogC gamma with el 160 -> LogC + EL160
+      static RGB Linearize(const RGB &c, Function gf=sRGB);
+      static RGB Unlinearize(const RGB &c, Function gf=sRGB);
    };
 
    class GMATH_API ColorSpace
