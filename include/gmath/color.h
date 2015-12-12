@@ -28,6 +28,7 @@ USA.
 #include <gmath/vector.h>
 #include <gmath/matrix.h>
 #include <gmath/details/color.h>
+#include <gmath/params.h>
 
 namespace gmath
 {
@@ -164,7 +165,41 @@ namespace gmath
       Matrix3 mXYZtoRGB;
       Matrix3 mRGBtoXYZ;
    };
-
+   
+   class GMATH_API ToneMappingOperator
+   {
+   public:
+      enum Method
+      {
+         Undefined = -1,
+         Simple,  // params: -                 [L' = L / (1 + L)]
+         Linear,  // params: Lmax              [L' = L / Lmax]
+         Gamma,   // params: gain (1.0), gamma [L' = gain * L^gamma]
+         Reinhard // params: key (0.18), Lavg, Lwht (<0 to disable)
+      };
+      
+   public:
+      
+      ToneMappingOperator(const ColorSpace &cs=ColorSpace::Rec709);
+      ~ToneMappingOperator();
+      
+      void setMethod(Method m, const Params &params);
+      void updateParams(const Params &params);
+      bool isValid() const;
+      
+      RGB operator()(const RGB &input) const;
+   
+   private:
+      ToneMappingOperator();
+      ToneMappingOperator& operator=(const ToneMappingOperator&);
+   
+   private:
+      const ColorSpace &mColorSpace;
+      Method mMethod;
+      void *mImpl;
+      bool mValid;
+   };
+   
    class GMATH_API Blackbody
    {
    public:
@@ -211,7 +246,7 @@ namespace gmath
    GMATH_API LMS XYZtoLMS(const XYZ &xyz, ChromaticAdaptationTransform cat=CAT_VonKries);
    GMATH_API XYZ LMStoXYZ(const LMS &lms, ChromaticAdaptationTransform cat=CAT_VonKries);
    GMATH_API Matrix3 ChromaticAdaptationMatrix(const XYZ &from, const XYZ &to, ChromaticAdaptationTransform cat=CAT_VonKries);
-
+    
    template <class SpectralPowerDensityFunc>
    XYZ IntegrateVisibleSpectrum(const SpectralPowerDensityFunc &spd, const float stdobs[81][3]=0)
    {

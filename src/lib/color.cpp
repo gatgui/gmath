@@ -620,6 +620,178 @@ const Chromaticity ColorSpace::getWhitePoint() const
 
 // ---
 
+struct TMO_LinearParams
+{
+   float Lmax;
+};
+
+struct TMO_GammaParams
+{
+   float gain;
+   float gamma;
+};
+
+struct TMO_ReinhardParams
+{
+   float key;
+   float Lavg;
+   float Lwht;
+};
+
+ToneMappingOperator::ToneMappingOperator(const ColorSpace &cs)
+   : mColorSpace(cs)
+   , mMethod(Undefined)
+   , mImpl(0)
+   , mValid(false)
+{
+}
+   
+ToneMappingOperator::~ToneMappingOperator()
+{
+   if (mImpl)
+   {
+      free(mImpl);
+   }
+}
+
+void ToneMappingOperator::setMethod(ToneMappingOperator::Method m, const Params &params)
+{
+   if (mMethod == m)
+   {
+      if (mImpl)
+      {
+         updateParams(params);
+      }
+   }
+   else
+   {
+      if (mImpl)
+      {
+         free(mImpl);
+         mImpl = 0;
+      }
+      
+      mMethod = m;
+      mValid = (mMethod != Undefined);
+      
+      if (mValid)
+      {
+         switch (mMethod)
+         {
+         case Linear:
+            mImpl = malloc(sizeof(TMO_LinearParams));
+            break;
+         case Gamma:
+            mImpl = malloc(sizeof(TMO_GammaParams));
+            break;
+         case Reinhard:
+            mImpl = malloc(sizeof(TMO_ReinhardParams));
+            break;
+         default:
+            break;
+         }
+         
+         if (mImpl)
+         {
+            updateParams(params);
+         }
+      }
+   }
+}
+
+void ToneMappingOperator::updateParams(const Params &params)
+{
+   if (!mImpl)
+   {
+      return;
+   }
+   
+   switch (mMethod)
+   {
+   case Linear:
+      {
+         TMO_LinearParams *p = (TMO_LinearParams*)mImpl;
+         mValid = (params.get("Lmax", p->Lmax) && p->Lmax > 0.0f);
+      }
+      break;
+   case Gamma:
+      {
+         TMO_GammaParams *p = (TMO_GammaParams*)mImpl;
+         if (!params.get("gain", p->gain))
+         {
+            p->gain = 1.0f;
+         }
+         mValid = params.get("gamma", p->gamma);
+      }
+      break;
+   case Reinhard:
+      {
+         TMO_ReinhardParams *p = (TMO_ReinhardParams*)mImpl;
+         if (!params.get("key", p->key))
+         {
+            p->key = 0.18f;
+         }
+         if (!params.get("Lwht", p->Lwht) || p->Lwht == 0.0f)
+         {
+            p->Lwht = -1.0f;
+         }
+         mValid = (params.get("Lavg", p->Lavg) && p->Lavg > 0.0f);
+      }
+      break;
+   default:
+      break;
+   }
+}
+
+RGB ToneMappingOperator::operator()(const RGB &input) const
+{
+   if (!mValid)
+   {
+      return input;
+   }
+   
+   XYZ xyz = mColorSpace.RGBtoXYZ(input);
+   
+   switch (mMethod)
+   {
+   case Simple:
+      xyz.y = xyz.y / (1.0f + xyz.y);
+      break;
+   case Linear:
+      {
+         TMO_LinearParams *p = (TMO_LinearParams*)mImpl;
+         xyz.y = xyz.y / p->Lmax;
+      }
+      break;
+   case Gamma:
+      {
+         TMO_GammaParams *p = (TMO_GammaParams*)mImpl;
+         xyz.y = p->gain * powf(xyz.y, p->gamma);
+      }
+      break;
+   case Reinhard:
+      {
+         TMO_ReinhardParams *p = (TMO_ReinhardParams*)mImpl;
+         float L = p->key * xyz.y / p->Lavg;
+         if (p->Lwht > 0.0f)
+         {
+            xyz.y = L * (1.0f + L / (p->Lwht * p->Lwht)) / (1.0f + L);
+         }
+         else
+         {
+            xyz.y = L / (1.0f + L);
+         }
+      }
+      break;
+   default:
+      break;
+   }
+   
+   return mColorSpace.XYZtoRGB(xyz);
+}
+
+// ---
+
 class BlackbodyColor
 {
 public:
