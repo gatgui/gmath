@@ -177,6 +177,48 @@ namespace gmath
          operator float* ();
          operator const float* () const;
       };
+      
+      class GMATH_API LAB
+      {
+      public:
+
+         static const int Dim = 3;
+
+         float l;
+         float a;
+         float b;
+
+         LAB();
+         LAB(float v);
+         LAB(const float *v);
+         LAB(const LAB &rhs);
+         ~LAB();
+
+         LAB& operator=(const LAB &rhs);
+         operator float* ();
+         operator const float* () const;
+      };
+      
+      class GMATH_API LUV
+      {
+      public:
+
+         static const int Dim = 3;
+
+         float l;
+         float u;
+         float v;
+
+         LUV();
+         LUV(float v);
+         LUV(const float *v);
+         LUV(const LUV &rhs);
+         ~LUV();
+
+         LUV& operator=(const LUV &rhs);
+         operator float* ();
+         operator const float* () const;
+      };
 
       template <class Base>
       class TColor : public Base
@@ -286,6 +328,24 @@ namespace gmath
       inline YUV& YUV::operator=(const YUV &rhs) { y = rhs.y; u = rhs.u; v = rhs.v; return *this; }
       inline YUV::operator float* () { return &(this->y); }
       inline YUV::operator const float* () const { return &(this->y); }
+      
+      inline LAB::LAB() : l(0.0f), a(0.0f), b(0.0f) {}
+      inline LAB::LAB(float v) : l(v), a(v), b(v) {}
+      inline LAB::LAB(const float *v) : l(v[0]), a(v[1]), b(v[2]) {}
+      inline LAB::LAB(const LAB &rhs) : l(rhs.l), a(rhs.a), b(rhs.b) {}
+      inline LAB::~LAB() {}
+      inline LAB& LAB::operator=(const LAB &rhs) { l = rhs.l; a = rhs.a; b = rhs.b; return *this; }
+      inline LAB::operator float* () { return &(this->l); }
+      inline LAB::operator const float* () const { return &(this->l); }
+      
+      inline LUV::LUV() : l(0.0f), u(0.0f), v(0.0f) {}
+      inline LUV::LUV(float _v) : l(_v), u(_v), v(_v) {}
+      inline LUV::LUV(const float *_v) : l(_v[0]), u(_v[1]), v(_v[2]) {}
+      inline LUV::LUV(const LUV &rhs) : l(rhs.l), u(rhs.u), v(rhs.v) {}
+      inline LUV::~LUV() {}
+      inline LUV& LUV::operator=(const LUV &rhs) { l = rhs.l; u = rhs.u; v = rhs.v; return *this; }
+      inline LUV::operator float* () { return &(this->l); }
+      inline LUV::operator const float* () const { return &(this->l); }
 
 #define self (*this)
 

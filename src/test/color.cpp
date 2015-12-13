@@ -103,5 +103,40 @@ int main(int, char**)
    std::cout << "  Bradford: " << ChromaticAdaptationMatrix(D50, D65, CAT_Bradford) << std::endl;
    std::cout << "  XYZ: " << ChromaticAdaptationMatrix(D50, D65, CAT_XYZ) << std::endl;
 
+   std::cout << "CIE L*a*b*" << std::endl;
+   RGB c0 = RGB(0.2f, 0.6f, 1.0f);
+   RGB c1 = RGB(0.7f, 0.3f, 0.8f);
+   RGB c2 = RGB(0.9f, 0.1f, 0.2f);
+   RGB c3 = RGB(1.0f, 1.0f, 1.0f);
+   
+   const ColorSpace &cs = ColorSpace::Rec709;
+   
+   XYZ xyz0 = cs.RGBtoXYZ(c0);
+   XYZ xyz1 = cs.RGBtoXYZ(c1);
+   XYZ xyz2 = cs.RGBtoXYZ(c2);
+   XYZ xyz3 = cs.RGBtoXYZ(c3);
+   
+   LAB lab0 = cs.XYZtoLAB(xyz0);
+   LAB lab1 = cs.XYZtoLAB(xyz1);
+   LAB lab2 = cs.XYZtoLAB(xyz2);
+   LAB lab3 = cs.XYZtoLAB(xyz3);
+   
+   LUV luv0 = cs.XYZtoLUV(xyz0);
+   LUV luv1 = cs.XYZtoLUV(xyz1);
+   LUV luv2 = cs.XYZtoLUV(xyz2);
+   LUV luv3 = cs.XYZtoLUV(xyz3);
+   
+   std::cout << "  RGB -> XYZ -> LAB -> XYZ -> RGB" << std::endl;
+   std::cout << "  " << c0 << " -> " << xyz0 << " -> " << lab0 << " -> " << cs.LABtoXYZ(lab0) << " -> " << cs.XYZtoRGB(cs.LABtoXYZ(lab0)) << std::endl;
+   std::cout << "  " << c1 << " -> " << xyz1 << " -> " << lab1 << " -> " << cs.LABtoXYZ(lab1) << " -> " << cs.XYZtoRGB(cs.LABtoXYZ(lab1)) << std::endl;
+   std::cout << "  " << c2 << " -> " << xyz2 << " -> " << lab2 << " -> " << cs.LABtoXYZ(lab2) << " -> " << cs.XYZtoRGB(cs.LABtoXYZ(lab2)) << std::endl;
+   std::cout << "  " << c3 << " -> " << xyz3 << " -> " << lab3 << " -> " << cs.LABtoXYZ(lab3) << " -> " << cs.XYZtoRGB(cs.LABtoXYZ(lab3)) << std::endl;
+   
+   std::cout << "  RGB -> XYZ -> LUV -> XYZ -> RGB" << std::endl;
+   std::cout << "  " << c0 << " -> " << xyz0 << " -> " << luv0 << " -> " << cs.LUVtoXYZ(luv0) << " -> " << cs.XYZtoRGB(cs.LUVtoXYZ(luv0)) << std::endl;
+   std::cout << "  " << c1 << " -> " << xyz1 << " -> " << luv1 << " -> " << cs.LUVtoXYZ(luv1) << " -> " << cs.XYZtoRGB(cs.LUVtoXYZ(luv1)) << std::endl;
+   std::cout << "  " << c2 << " -> " << xyz2 << " -> " << luv2 << " -> " << cs.LUVtoXYZ(luv2) << " -> " << cs.XYZtoRGB(cs.LUVtoXYZ(luv2)) << std::endl;
+   std::cout << "  " << c3 << " -> " << xyz3 << " -> " << luv3 << " -> " << cs.LUVtoXYZ(luv3) << " -> " << cs.XYZtoRGB(cs.LUVtoXYZ(luv3)) << std::endl;
+   
    return 0;
 }

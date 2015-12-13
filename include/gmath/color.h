@@ -55,6 +55,8 @@ namespace gmath
    typedef details::TColor<details::XYZ> XYZ;
    typedef details::TColor<details::LMS> LMS;
    typedef details::TColor<details::YUV> YUV;
+   typedef details::TColor<details::LAB> LAB;
+   typedef details::TColor<details::LUV> LUV;
 
    class GMATH_API Chromaticity
    {
@@ -133,6 +135,16 @@ namespace gmath
       RGB XYZtoRGB(const XYZ &xyz) const;
       YUV RGBtoYUV(const RGB &rgb) const;
       RGB YUVtoRGB(const YUV &yuv) const;
+      
+      LAB XYZtoLAB(const XYZ &xyz) const;
+      LAB XYZtoLAB(const XYZ &xyz, const Chromaticity &w) const;
+      XYZ LABtoXYZ(const LAB &lab) const;
+      XYZ LABtoXYZ(const LAB &lab, const Chromaticity &w) const;
+      
+      LUV XYZtoLUV(const XYZ &xyz) const;
+      LUV XYZtoLUV(const XYZ &xyz, const Chromaticity &w) const;
+      XYZ LUVtoXYZ(const LUV &luv) const;
+      XYZ LUVtoXYZ(const LUV &luv, const Chromaticity &w) const;
 
       const std::string& getName() const;
 

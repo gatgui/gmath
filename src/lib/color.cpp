@@ -591,6 +591,150 @@ RGB ColorSpace::YUVtoRGB(const YUV &yuv) const
    return rgb;
 }
 
+static float s6over29 = 6.0f / 29.0f;
+static float s6over29s = s6over29 * s6over29;
+static float s6over29c = s6over29 * s6over29s;
+static float s29over6s = (29.0f * 29.0f) / (6.0f * 6.0f);
+static float s3over29 = 3.0f / 29.0f;
+static float s3over29s = s3over29 * s3over29;
+static float s3over29c = s3over29 * s3over29s;
+static float s29over3 = 29.0f / 3.0f;
+static float s29over3s = s29over3 * s29over3;
+static float s29over3c = s29over3 * s29over3s;
+static float s1over116 = 1.0f / 116.0f;
+static float s1over500 = 1.0f / 500.0f;
+static float s1over200 = 1.0f / 200.0f;
+static float s4over29 = 4.0f / 29.0f;
+static float s1over3 = 1.0f / 3.0f;
+
+static float LABf(float t, bool inverse)
+{
+   if (!inverse)
+   {
+      if (t > s6over29c)
+      {
+         return powf(t, s1over3);
+      }
+      else
+      {
+         return s1over3 * s29over6s * t + s4over29; 
+      }
+   }
+   else
+   {
+      if (t > s6over29) // t^3 > s6over29c
+      {
+         return powf(t, 3.0f);
+      }
+      else
+      {
+         return 3.0f * s6over29s * (t - s4over29);
+      }
+   }
+}
+
+LAB ColorSpace::XYZtoLAB(const XYZ &xyz) const
+{
+   return XYZtoLAB(xyz, mWhite);
+}
+
+XYZ ColorSpace::LABtoXYZ(const LAB &lab) const
+{
+   return LABtoXYZ(lab, mWhite);
+}
+
+LAB ColorSpace::XYZtoLAB(const XYZ &xyz, const Chromaticity &w) const
+{
+   LAB lab;
+   
+   XYZ W = ChromaticityYtoXYZ(w, 1.0f);
+   
+   float fYoverYw = LABf(xyz.y / W.y, false);
+   
+   lab.l = 116.0f * fYoverYw - 16.0f;
+   lab.a = 500.0f * (LABf(xyz.x / W.x, false) - fYoverYw);
+   lab.b = 200.0f * (fYoverYw - LABf(xyz.z / W.z, false));
+   
+   return lab;
+}
+
+XYZ ColorSpace::LABtoXYZ(const LAB &lab, const Chromaticity &w) const
+{
+   XYZ xyz;
+   
+   XYZ W = ChromaticityYtoXYZ(w, 1.0f);
+   
+   float Lplus16over116 = s1over116 * (lab.l + 16.0f);
+   
+   xyz.x = W.x * LABf(Lplus16over116 + s1over500 * lab.a, true);
+   xyz.y = W.y * LABf(Lplus16over116, true);
+   xyz.z = W.z * LABf(Lplus16over116 - s1over200 * lab.b, true);
+   
+   return xyz;
+}
+
+LUV ColorSpace::XYZtoLUV(const XYZ &xyz) const
+{
+   return XYZtoLUV(xyz, mWhite);
+}
+
+XYZ ColorSpace::LUVtoXYZ(const LUV &luv) const
+{
+   return LUVtoXYZ(luv, mWhite);
+}
+
+LUV ColorSpace::XYZtoLUV(const XYZ &xyz, const Chromaticity &w) const
+{
+   LUV luv;
+   
+   XYZ W = ChromaticityYtoXYZ(w, 1.0f);
+   
+   float uprimeW = (4.0f * W.x) / (W.x + 15.0f * W.y + 3.0f * W.z);
+   float vprimeW = (9.0f * W.y) / (W.x + 15.0f * W.y + 3.0f * W.z);
+   float uprime = (4.0f * xyz.x) / (xyz.x + 15.0f * xyz.y + 3.0f * xyz.z);
+   float vprime = (9.0f * xyz.y) / (xyz.x + 15.0f * xyz.y + 3.0f * xyz.z);
+   
+   float YoverYw = xyz.y / W.y;
+   
+   if (YoverYw <= s6over29c)
+   {
+      luv.l = s29over3c * YoverYw;
+   }
+   else
+   {
+      luv.l = 116.0f * powf(YoverYw, s1over3) - 16.0f;
+   }
+   luv.u = 13.0f * luv.l * (uprime - uprimeW);
+   luv.v = 13.0f * luv.l * (vprime - vprimeW);
+   
+   return luv;
+}
+
+XYZ ColorSpace::LUVtoXYZ(const LUV &luv, const Chromaticity &w) const
+{
+   XYZ xyz;
+   
+   XYZ W = ChromaticityYtoXYZ(w, 1.0f);
+   
+   float uprimeW = (4.0f * W.x) / (W.x + 15.0f * W.y + 3.0f * W.z);
+   float vprimeW = (9.0f * W.y) / (W.x + 15.0f * W.y + 3.0f * W.z);
+   float uprime = luv.u / (13.0f * luv.l) + uprimeW;
+   float vprime = luv.v / (13.0f * luv.l) + vprimeW;
+   
+   if (luv.l <= 8.0f)
+   {
+      xyz.y = W.y * luv.l * s3over29c;
+   }
+   else
+   {
+      xyz.y = W.y * powf((luv.l + 16.0f) / 116.0f, 3.0f);
+   }
+   xyz.x = xyz.y * (9.0f * uprime) / (4.0f * vprime);
+   xyz.z = xyz.y * (12.0f - 3.0f * uprime - 20.0f * vprime) / (4.0f * vprime);
+   
+   return xyz;
+}
+
 const std::string& ColorSpace::getName() const
 {
    return mName;
