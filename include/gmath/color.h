@@ -89,11 +89,12 @@ namespace gmath
          Power22 = 0,
          Power24,
          sRGB,
-         Rec709,
+         Rec709, // == 10 bits Rec2020
          LogCv2 = Rec709 + 8, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
          LogCv3 = LogCv2 + 11, // Base exposure level: 800 (160, 200, 250, 320, 400, 500, 640, 800, 1000, 1280, 1600)
          LogC = LogCv3,
-         Cineon = LogCv3 + 4
+         Cineon = LogCv3 + 4,
+         Rec2020 // == 12 bits Rec2020
       };
       
       // LogC exposure levels

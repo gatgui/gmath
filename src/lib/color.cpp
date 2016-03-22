@@ -384,17 +384,20 @@ RGB Gamma::Unlinearize(const RGB &c, Gamma::Function gf)
       rgb.g = powf(c.g, oneOver22);
       rgb.b = powf(c.b, oneOver22);
       break;
+
    case Power24:
       rgb.r = powf(c.r, oneOver24);
       rgb.g = powf(c.g, oneOver24);
       rgb.b = powf(c.b, oneOver24);
       break;
+
    case sRGB:
       // https://en.wikipedia.org/wiki/SRGB
       rgb.r = c.r <= 0.0031308f ? 12.92f * c.r : 1.055f * powf(c.r, oneOver24) - 0.055f;
       rgb.g = c.g <= 0.0031308f ? 12.92f * c.g : 1.055f * powf(c.g, oneOver24) - 0.055f;
       rgb.b = c.b <= 0.0031308f ? 12.92f * c.b : 1.055f * powf(c.b, oneOver24) - 0.055f;
       break;
+
    case Rec709:
       // https://en.wikipedia.org/wiki/Rec._709
       rgb.r = c.r < 0.018f ? 4.5f * c.r : 1.099f * powf(c.r, 0.45f) - 0.099f;
@@ -402,6 +405,13 @@ RGB Gamma::Unlinearize(const RGB &c, Gamma::Function gf)
       rgb.b = c.b < 0.018f ? 4.5f * c.b : 1.099f * powf(c.b, 0.45f) - 0.099f;
       break;
 
+   case Rec2020:
+      // https://en.wikipedia.org/wiki/Rec._2020
+      rgb.r = c.r < 0.0181f ? 4.5f * c.r : 1.0993f * powf(c.r, 0.45f) - 0.0993f;
+      rgb.g = c.g < 0.0181f ? 4.5f * c.g : 1.0993f * powf(c.g, 0.45f) - 0.0993f;
+      rgb.b = c.b < 0.0181f ? 4.5f * c.b : 1.0993f * powf(c.b, 0.45f) - 0.0993f;
+      break;
+   
    case LogC:
       // http://www.vocas.nl/webfm_send/964
       rgb.r = (c.r > lcp->cut ? lcp->c * log10f(lcp->a * c.r + lcp->b) + lcp->d : lcp->e * c.r + lcp->f);
