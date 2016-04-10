@@ -201,6 +201,7 @@ namespace gmath
       bool isValid() const;
       
       RGB operator()(const RGB &input) const;
+      XYZ operator()(const XYZ &input) const;
    
    private:
       ToneMappingOperator();

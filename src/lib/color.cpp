@@ -897,14 +897,14 @@ void ToneMappingOperator::updateParams(const Params &params)
    }
 }
 
-RGB ToneMappingOperator::operator()(const RGB &input) const
+XYZ ToneMappingOperator::operator()(const XYZ &input) const
 {
    if (!mValid)
    {
       return input;
    }
    
-   XYZ xyz = mColorSpace.RGBtoXYZ(input);
+   XYZ xyz = input;
    
    switch (mMethod)
    {
@@ -941,7 +941,12 @@ RGB ToneMappingOperator::operator()(const RGB &input) const
       break;
    }
    
-   return mColorSpace.XYZtoRGB(xyz);
+   return xyz;
+}
+
+RGB ToneMappingOperator::operator()(const RGB &input) const
+{
+   return mColorSpace.XYZtoRGB(this->operator()(mColorSpace.RGBtoXYZ(input)));
 }
 
 // ---
