@@ -897,6 +897,11 @@ void ToneMappingOperator::updateParams(const Params &params)
    }
 }
 
+bool ToneMappingOperator::isValid() const
+{
+  return (mImpl && mValid);
+}
+
 XYZ ToneMappingOperator::operator()(const XYZ &input) const
 {
    if (!mValid)
