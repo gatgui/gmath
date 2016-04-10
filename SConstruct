@@ -1,16 +1,9 @@
-try:
-  import excons
-except:
-  import subprocess
-  subprocess.Popen("git submodule init", shell=True).communicate()
-  subprocess.Popen("git submodule update", shell=True).communicate()
-  import excons
-
+import excons
 import glob
 import excons.tools
 from excons.tools import lua, gl, glut
 
-staticBuild = (int(ARGUMENTS.get("static", "0")) == 1)
+staticBuild = (excons.GetArgument("static", "0", int) == 1)
 
 def NoDeprecated(env):
    import sys
