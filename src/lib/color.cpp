@@ -774,24 +774,6 @@ const Chromaticity ColorSpace::getWhitePoint() const
 
 // ---
 
-struct TMO_LinearParams
-{
-   float Lmax;
-};
-
-struct TMO_GammaParams
-{
-   float gain;
-   float gamma;
-};
-
-struct TMO_ReinhardParams
-{
-   float key;
-   float Lavg;
-   float Lwht;
-};
-
 ToneMappingOperator::ToneMappingOperator(const ColorSpace &cs)
    : mColorSpace(cs)
    , mMethod(Undefined)
@@ -833,13 +815,13 @@ void ToneMappingOperator::setMethod(ToneMappingOperator::Method m, const Params 
          switch (mMethod)
          {
          case Linear:
-            mImpl = malloc(sizeof(TMO_LinearParams));
+            mImpl = malloc(sizeof(LinearParams));
             break;
          case Gamma:
-            mImpl = malloc(sizeof(TMO_GammaParams));
+            mImpl = malloc(sizeof(GammaParams));
             break;
          case Reinhard:
-            mImpl = malloc(sizeof(TMO_ReinhardParams));
+            mImpl = malloc(sizeof(ReinhardParams));
             break;
          default:
             break;
@@ -864,13 +846,13 @@ void ToneMappingOperator::updateParams(const Params &params)
    {
    case Linear:
       {
-         TMO_LinearParams *p = (TMO_LinearParams*)mImpl;
+         LinearParams *p = (LinearParams*)mImpl;
          mValid = (params.get("Lmax", p->Lmax) && p->Lmax > 0.0f);
       }
       break;
    case Gamma:
       {
-         TMO_GammaParams *p = (TMO_GammaParams*)mImpl;
+         GammaParams *p = (GammaParams*)mImpl;
          if (!params.get("gain", p->gain))
          {
             p->gain = 1.0f;
@@ -880,16 +862,53 @@ void ToneMappingOperator::updateParams(const Params &params)
       break;
    case Reinhard:
       {
-         TMO_ReinhardParams *p = (TMO_ReinhardParams*)mImpl;
+         ReinhardParams *p = (ReinhardParams*)mImpl;
          if (!params.get("key", p->key))
          {
             p->key = 0.18f;
          }
-         if (!params.get("Lwht", p->Lwht) || p->Lwht == 0.0f)
+         if (!params.get("Lwht", p->Lwht))
          {
-            p->Lwht = -1.0f;
+            p->Lwht = 0.0f;
          }
          mValid = (params.get("Lavg", p->Lavg) && p->Lavg > 0.0f);
+      }
+      break;
+   default:
+      break;
+   }
+}
+
+void ToneMappingOperator::updateParamsUnsafe(void *params)
+{
+   if (!mImpl)
+   {
+      return;
+   }
+   
+   switch (mMethod)
+   {
+   case Linear:
+      {
+         LinearParams *dst = (LinearParams*)mImpl;
+         LinearParams *src = (LinearParams*)params;
+         *dst = *src;
+         mValid = (dst->Lmax > 0.0f);
+      }
+      break;
+   case Gamma:
+      {
+         GammaParams *dst = (GammaParams*)mImpl;
+         GammaParams *src = (GammaParams*)params;
+         *dst = *src;
+      }
+      break;
+   case Reinhard:
+      {
+         ReinhardParams *dst = (ReinhardParams*)mImpl;
+         ReinhardParams *src = (ReinhardParams*)params;
+         *dst = *src;
+         mValid = (dst->Lavg > 0.0f);
       }
       break;
    default:
@@ -900,6 +919,51 @@ void ToneMappingOperator::updateParams(const Params &params)
 bool ToneMappingOperator::isValid() const
 {
   return (mImpl && mValid);
+}
+
+ToneMappingOperator::Method ToneMappingOperator::getMethod() const
+{
+   return (isValid() ? mMethod : Undefined);
+}
+
+void ToneMappingOperator::getParams(Params &params) const
+{
+   params.clear();
+   
+   if (mImpl)
+   {
+      switch (mMethod)
+      {
+      case Linear:
+         {
+            LinearParams *p = (LinearParams*)mImpl;
+            params.set("Lmax", p->Lmax);
+         }
+         break;
+      case Gamma:
+         {
+            GammaParams *p = (GammaParams*)mImpl;
+            params.set("gain", p->gain);
+            params.set("gamma", p->gamma);
+         }
+         break;
+      case Reinhard:
+         {
+            ReinhardParams *p = (ReinhardParams*)mImpl;
+            params.set("key", p->key);
+            params.set("Lavg", p->Lavg);
+            params.set("Lwht", p->Lwht);
+         }
+         break;
+      default:
+         break;
+      }
+   }
+}
+
+void* ToneMappingOperator::getParamsUnsafe() const
+{
+   return mImpl;
 }
 
 XYZ ToneMappingOperator::operator()(const XYZ &input) const
@@ -918,19 +982,19 @@ XYZ ToneMappingOperator::operator()(const XYZ &input) const
       break;
    case Linear:
       {
-         TMO_LinearParams *p = (TMO_LinearParams*)mImpl;
+         LinearParams *p = (LinearParams*)mImpl;
          xyz.y = xyz.y / p->Lmax;
       }
       break;
    case Gamma:
       {
-         TMO_GammaParams *p = (TMO_GammaParams*)mImpl;
+         GammaParams *p = (GammaParams*)mImpl;
          xyz.y = p->gain * powf(xyz.y, p->gamma);
       }
       break;
    case Reinhard:
       {
-         TMO_ReinhardParams *p = (TMO_ReinhardParams*)mImpl;
+         ReinhardParams *p = (ReinhardParams*)mImpl;
          float L = p->key * xyz.y / p->Lavg;
          if (p->Lwht > 0.0f)
          {

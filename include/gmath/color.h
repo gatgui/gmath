@@ -191,6 +191,24 @@ namespace gmath
          Reinhard // params: key (0.18), Lavg, Lwht (<0 to disable)
       };
       
+      struct LinearParams
+      {
+         float Lmax;
+      };
+
+      struct GammaParams
+      {
+         float gain;
+         float gamma;
+      };
+
+      struct ReinhardParams
+      {
+         float key;
+         float Lavg;
+         float Lwht;
+      };
+      
    public:
       
       ToneMappingOperator(const ColorSpace &cs=ColorSpace::Rec709);
@@ -198,7 +216,12 @@ namespace gmath
       
       void setMethod(Method m, const Params &params);
       void updateParams(const Params &params);
+      void updateParamsUnsafe(void *params);
+      
       bool isValid() const;
+      Method getMethod() const;
+      void getParams(Params &params) const;
+      void* getParamsUnsafe() const;
       
       RGB operator()(const RGB &input) const;
       XYZ operator()(const XYZ &input) const;
