@@ -28,6 +28,21 @@ int main(int, char **)
    
    params.set("key", 0.0f);
    
+   gmath::Params::accessor tmp0;
+   gmath::Params::accessor tmp1(params, "dummy");
+   
+   if (tmp0.valid())
+   {
+      std::cerr << "Accessor validity failed (default)" << std::endl;
+      return 1;
+   }
+   
+   if (tmp1.valid())
+   {
+      std::cerr << "Accessor validity failed (unknown key)" << std::endl;
+      return 1;
+   }
+   
    gmath::Params::accessor a0(params, "key");
    gmath::Params::accessor a1(params, "key");
    gmath::Params::accessor a2(a0);

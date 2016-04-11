@@ -26,6 +26,11 @@ USA.
 namespace gmath
 {
 
+Params::accessor::accessor()
+{
+   mIt = mEnd;
+}
+
 Params::accessor::accessor(Params &p, const char *n)
 {
    mIt = p.mParamMap.find(n);
@@ -126,6 +131,11 @@ Params::accessor::operator const char* () const
 }
 
 // ---
+
+Params::const_accessor::const_accessor()
+{
+   mIt = mEnd;
+}
 
 Params::const_accessor::const_accessor(const Params &p, const char *n)
 {

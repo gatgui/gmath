@@ -70,6 +70,7 @@ namespace gmath
       public:
          friend class const_accessor;
          
+         accessor();
          accessor(Params &p, const char *n);
          accessor(const accessor &rhs);
          
@@ -92,7 +93,6 @@ namespace gmath
          operator const char* () const;
       
       private:
-         accessor();
          
          MapType::iterator mIt;
          MapType::iterator mEnd;
@@ -101,6 +101,7 @@ namespace gmath
       class GMATH_API const_accessor
       {
       public:
+         const_accessor();
          const_accessor(const Params &p, const char *n);
          const_accessor(const accessor &rhs);
          const_accessor(const const_accessor &rhs);
@@ -122,7 +123,6 @@ namespace gmath
          operator const char* () const;
       
       private:
-         const_accessor();
          
          MapType::const_iterator mIt;
          MapType::const_iterator mEnd;
