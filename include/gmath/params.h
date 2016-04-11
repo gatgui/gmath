@@ -41,6 +41,96 @@ namespace gmath
          String
       };
       
+      struct Param
+      {
+         ParamType type;
+         union
+         {
+            bool b;
+            long i;
+            float f;
+            const char *s;
+         } data;
+      };
+      
+      struct LessThanStr
+      {
+         inline bool operator()(const char *s0, const char *s1) const
+         {
+            return (strcmp(s0, s1) < 0);
+         }
+      };
+      
+      typedef std::map<const char*, Param, LessThanStr> MapType;
+      
+      class const_accessor;
+      
+      class GMATH_API accessor
+      {
+      public:
+         friend class const_accessor;
+         
+         accessor(Params &p, const char *n);
+         accessor(const accessor &rhs);
+         
+         accessor& operator=(const accessor &rhs);
+         bool operator==(const accessor &rhs) const;
+         bool operator!=(const accessor &rhs) const;
+         
+         bool valid() const;
+         ParamType type() const;
+         const char* name() const;
+         
+         accessor& operator=(bool v);
+         accessor& operator=(long v);
+         accessor& operator=(float v);
+         accessor& operator=(const char *v);
+         
+         operator bool () const;
+         operator long () const;
+         operator float () const;
+         operator const char* () const;
+      
+      private:
+         accessor();
+         
+         MapType::iterator mIt;
+         MapType::iterator mEnd;
+      };
+      
+      class GMATH_API const_accessor
+      {
+      public:
+         const_accessor(const Params &p, const char *n);
+         const_accessor(const accessor &rhs);
+         const_accessor(const const_accessor &rhs);
+         
+         const_accessor& operator=(const accessor &rhs);
+         const_accessor& operator=(const const_accessor &rhs);
+         bool operator==(const accessor &rhs) const;
+         bool operator==(const const_accessor &rhs) const;
+         bool operator!=(const accessor &rhs) const;
+         bool operator!=(const const_accessor &rhs) const;
+         
+         bool valid() const;
+         ParamType type() const;
+         const char* name() const;
+         
+         operator bool () const;
+         operator long () const;
+         operator float () const;
+         operator const char* () const;
+      
+      private:
+         const_accessor();
+         
+         MapType::const_iterator mIt;
+         MapType::const_iterator mEnd;
+      };
+      
+      friend class accessor;
+      friend class const_accessor;
+      
    public:
       Params();
       Params(const Params &rhs);
@@ -65,28 +155,6 @@ namespace gmath
       ParamType type(size_t i) const;
       
    private:
-      
-      struct Param
-      {
-         ParamType type;
-         union
-         {
-            bool b;
-            long i;
-            float f;
-            const char *s;
-         } data;
-      };
-      
-      struct LessThanStr
-      {
-         inline bool operator()(const char *s0, const char *s1) const
-         {
-            return (strcmp(s0, s1) < 0);
-         }
-      };
-      
-      typedef std::map<const char*, Param, LessThanStr> MapType;
       
       MapType mParamMap;
    };

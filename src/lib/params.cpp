@@ -26,6 +26,194 @@ USA.
 namespace gmath
 {
 
+Params::accessor::accessor(Params &p, const char *n)
+{
+   mIt = p.mParamMap.find(n);
+   mEnd = p.mParamMap.end();
+}
+
+Params::accessor::accessor(const Params::accessor &rhs)
+   : mIt(rhs.mIt), mEnd(rhs.mEnd)
+{
+}
+
+Params::accessor& Params::accessor::operator=(const Params::accessor &rhs)
+{
+   mIt = rhs.mIt;
+   mEnd = rhs.mEnd;
+   return *this;
+}
+
+bool Params::accessor::operator==(const Params::accessor &rhs) const
+{
+   return (mIt == rhs.mIt);
+}
+
+bool Params::accessor::operator!=(const Params::accessor &rhs) const
+{
+   return (mIt != rhs.mIt);
+}
+
+bool Params::accessor::valid() const
+{
+   return (mIt != mEnd);
+}
+
+Params::ParamType Params::accessor::type() const
+{
+   return (mIt != mEnd ? mIt->second.type : Undefined);
+}
+
+const char* Params::accessor::name() const
+{
+   return (mIt != mEnd ? mIt->first : 0);
+}
+
+Params::accessor& Params::accessor::operator=(bool v)
+{
+   if (type() == Bool)
+   {
+      mIt->second.data.b = v;
+   }
+   return *this;
+}
+
+Params::accessor& Params::accessor::operator=(long v)
+{
+   if (type() == Int)
+   {
+      mIt->second.data.i = v;
+   }
+   return *this;
+}
+
+Params::accessor& Params::accessor::operator=(float v)
+{
+   if (type() == Float)
+   {
+      mIt->second.data.f = v;
+   }
+   return *this;
+}
+
+Params::accessor& Params::accessor::operator=(const char *v)
+{
+   if (type() == String)
+   {
+      mIt->second.data.s = v;
+   }
+   return *this;
+}
+
+Params::accessor::operator bool () const
+{
+   return (mIt != mEnd && mIt->second.type == Bool ? mIt->second.data.b : false);
+}
+
+Params::accessor::operator long () const
+{
+   return (mIt != mEnd && mIt->second.type == Int ? mIt->second.data.i : 0);
+}
+
+Params::accessor::operator float () const
+{
+   return (mIt != mEnd && mIt->second.type == Float ? mIt->second.data.f : 0.0f);
+}
+
+Params::accessor::operator const char* () const
+{
+   return (mIt != mEnd && mIt->second.type == String ? mIt->second.data.s : 0);
+}
+
+// ---
+
+Params::const_accessor::const_accessor(const Params &p, const char *n)
+{
+   mIt = p.mParamMap.find(n);
+   mEnd = p.mParamMap.end();
+}
+
+Params::const_accessor::const_accessor(const Params::accessor &rhs)
+   : mIt(rhs.mIt), mEnd(rhs.mEnd)
+{
+}
+
+Params::const_accessor::const_accessor(const Params::const_accessor &rhs)
+   : mIt(rhs.mIt), mEnd(rhs.mEnd)
+{
+}
+
+Params::const_accessor& Params::const_accessor::operator=(const Params::accessor &rhs)
+{
+   mIt = rhs.mIt;
+   mEnd = rhs.mEnd;
+   return *this;
+}
+
+Params::const_accessor& Params::const_accessor::operator=(const Params::const_accessor &rhs)
+{
+   mIt = rhs.mIt;
+   mEnd = rhs.mEnd;
+   return *this;
+}
+
+bool Params::const_accessor::operator==(const Params::accessor &rhs) const
+{
+   return (mIt == rhs.mIt);
+}
+
+bool Params::const_accessor::operator!=(const Params::accessor &rhs) const
+{
+   return (mIt != rhs.mIt);
+}
+
+bool Params::const_accessor::operator==(const Params::const_accessor &rhs) const
+{
+   return (mIt == rhs.mIt);
+}
+
+bool Params::const_accessor::operator!=(const Params::const_accessor &rhs) const
+{
+   return (mIt != rhs.mIt);
+}
+
+bool Params::const_accessor::valid() const
+{
+   return (mIt != mEnd);
+}
+
+Params::ParamType Params::const_accessor::type() const
+{
+   return (mIt != mEnd ? mIt->second.type : Undefined);
+}
+
+const char* Params::const_accessor::name() const
+{
+   return (mIt != mEnd ? mIt->first : 0);
+}
+
+Params::const_accessor::operator bool () const
+{
+   return (mIt != mEnd && mIt->second.type == Bool ? mIt->second.data.b : false);
+}
+
+Params::const_accessor::operator long () const
+{
+   return (mIt != mEnd && mIt->second.type == Int ? mIt->second.data.i : 0);
+}
+
+Params::const_accessor::operator float () const
+{
+   return (mIt != mEnd && mIt->second.type == Float ? mIt->second.data.f : 0.0f);
+}
+
+Params::const_accessor::operator const char* () const
+{
+   return (mIt != mEnd && mIt->second.type == String ? mIt->second.data.s : 0);
+}
+
+// ---
+
 Params::Params()
 {
 }
