@@ -217,6 +217,7 @@ namespace gmath
       void setMethod(Method m, const Params &params);
       void updateParams(const Params &params);
       void updateParamsUnsafe(void *params);
+      bool validate();
       
       bool isValid() const;
       Method getMethod() const;

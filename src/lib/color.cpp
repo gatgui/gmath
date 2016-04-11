@@ -916,6 +916,37 @@ void ToneMappingOperator::updateParamsUnsafe(void *params)
    }
 }
 
+bool ToneMappingOperator::validate()
+{
+   if (!mImpl)
+   {
+      mValid = false;
+   }
+   else
+   {
+      mValid = true;
+      
+      switch (mMethod)
+      {
+      case Linear:
+         {
+            LinearParams *p = (LinearParams*)mImpl;
+            mValid = (p->Lmax > 0.0f);
+         }
+         break;
+      case Reinhard:
+         {
+            ReinhardParams *p = (ReinhardParams*)mImpl;
+            mValid = (p->Lavg > 0.0f);
+         }
+      default:
+         break;
+      }
+   }
+   
+   return mValid;
+}
+
 bool ToneMappingOperator::isValid() const
 {
   return (mImpl && mValid);
