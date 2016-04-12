@@ -439,7 +439,7 @@ namespace gmath
    GMATH_API float Intensity(const RGB &rgb);
    GMATH_API RGB Grade(const RGB &rgb, const RGB &black, const RGB &white, const RGB &lift, const RGB &gain);
 
-   GMATH_API Chromaticity XYZtoChromaticity(const XYZ &xyz);
+   GMATH_API Chromaticity XYZtoChromaticity(const XYZ &xyz, const Chromaticity &Wc=Chromaticity::IllumD65);
    GMATH_API XYZ ChromaticityYtoXYZ(const Chromaticity &c, float Y);
 
    GMATH_API LMS XYZtoLMS(const XYZ &xyz, ChromaticAdaptationTransform cat=CAT_VonKries);

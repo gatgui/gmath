@@ -883,7 +883,7 @@ void ToneMappingOperator::updateParams(const Params &params)
          {
             impl->accessors.Lmax = Lmax;
          }
-         mValid = (float(impl->accessors.Lmax) > 0.0f);
+         mValid = (float(impl->accessors.Lmax) > 0.000001f);
       }
       break;
    case Gamma:
@@ -919,7 +919,7 @@ void ToneMappingOperator::updateParams(const Params &params)
          {
             impl->accessors.Lwht = Lwht;
          }
-         mValid = (float(impl->accessors.Lavg) > 0.0f);
+         mValid = (float(impl->accessors.Lavg) > 0.000001f);
       }
    default:
       break;
@@ -941,13 +941,13 @@ bool ToneMappingOperator::validate()
       case Linear:
          {
             Impl<LinearParams> *impl = (Impl<LinearParams>*)mImpl;
-            mValid = (float(impl->accessors.Lmax) > 0.0f);
+            mValid = (float(impl->accessors.Lmax) > 0.000001f);
          }
          break;
       case Reinhard:
          {
             Impl<ReinhardParams> *impl = (Impl<ReinhardParams>*)mImpl;
-            mValid = (float(impl->accessors.Lavg) > 0.0f);
+            mValid = (float(impl->accessors.Lavg) > 0.000001f);
          }
       default:
          break;
@@ -996,37 +996,38 @@ XYZ ToneMappingOperator::operator()(const XYZ &input) const
       return input;
    }
    
-   XYZ xyz = input;
+   Chromaticity chroma = XYZtoChromaticity(input, mColorSpace.getWhitePoint());
+   float Lout = input.y;
    
    switch (mMethod)
    {
    case Simple:
-      xyz.y = xyz.y / (1.0f + xyz.y);
+      Lout = Lout / (1.0f + Lout);
       break;
    case Linear:
       {
          Impl<LinearParams> *impl = (Impl<LinearParams>*)mImpl;
-         xyz.y = xyz.y / float(impl->accessors.Lmax);
+         Lout = Lout / float(impl->accessors.Lmax);
       }
       break;
    case Gamma:
       {
          Impl<GammaParams> *impl = (Impl<GammaParams>*)mImpl;
-         xyz.y = float(impl->accessors.gain) * powf(xyz.y, float(impl->accessors.gamma));
+         Lout = float(impl->accessors.gain) * powf(Lout, float(impl->accessors.gamma));
       }
       break;
    case Reinhard:
       {
          Impl<ReinhardParams> *impl = (Impl<ReinhardParams>*)mImpl;
-         float L = float(impl->accessors.key) * xyz.y / float(impl->accessors.Lavg);
+         float L = float(impl->accessors.key) * Lout / float(impl->accessors.Lavg);
          float Lwht = float(impl->accessors.Lwht);
-         if (Lwht > 0.0f)
+         if (Lwht > 0.000001f)
          {
-            xyz.y = L * (1.0f + L / (Lwht * Lwht)) / (1.0f + L);
+            Lout = L * (1.0f + L / (Lwht * Lwht)) / (1.0f + L);
          }
          else
          {
-            xyz.y = L / (1.0f + L);
+            Lout = L / (1.0f + L);
          }
       }
       break;
@@ -1034,7 +1035,7 @@ XYZ ToneMappingOperator::operator()(const XYZ &input) const
       break;
    }
    
-   return xyz;
+   return ChromaticityYtoXYZ(chroma, Lout);
 }
 
 RGB ToneMappingOperator::operator()(const RGB &input) const
@@ -1534,10 +1535,18 @@ Matrix3 ChromaticAdaptationMatrix(const XYZ &from, const XYZ &to, ChromaticAdapt
    }
 }
 
-Chromaticity XYZtoChromaticity(const XYZ &xyz)
+Chromaticity XYZtoChromaticity(const XYZ &xyz, const Chromaticity &Wc)
 {
-   float isum = 1.0f / (xyz.x + xyz.y + xyz.z);
-   return Chromaticity(xyz.x * isum, xyz.y * isum);
+   float sum = (xyz.x + xyz.y + xyz.z);
+   if (sum >= 0.000001f)
+   {
+      float isum = 1.0f / sum;
+      return Chromaticity(xyz.x * isum, xyz.y * isum);
+   }
+   else
+   {
+      return Wc;
+   }
 }
 
 XYZ ChromaticityYtoXYZ(const Chromaticity &c, float Y)
