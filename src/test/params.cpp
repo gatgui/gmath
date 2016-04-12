@@ -21,15 +21,18 @@ USA.
 
 */
 #include <gmath/params.h>
+#include <gmath/color.h>
+
+using namespace gmath;
 
 int main(int, char **)
 {
-   gmath::Params params;
+   Params params;
    
    params.set("key", 0.0f);
    
-   gmath::Params::accessor tmp0;
-   gmath::Params::accessor tmp1(params, "dummy");
+   Params::accessor tmp0;
+   Params::accessor tmp1(params, "dummy");
    
    if (tmp0.valid())
    {
@@ -43,9 +46,9 @@ int main(int, char **)
       return 1;
    }
    
-   gmath::Params::accessor a0(params, "key");
-   gmath::Params::accessor a1(params, "key");
-   gmath::Params::accessor a2(a0);
+   Params::accessor a0(params, "key");
+   Params::accessor a1(params, "key");
+   Params::accessor a2(a0);
    
    if (a0 != a1 || a1 != a2)
    {
@@ -69,6 +72,55 @@ int main(int, char **)
    }
    
    std::cout << "Success: v=" << float(a2) << std::endl;
+   
+   ToneMappingOperator tmo;
+   ToneMappingOperator::ReinhardParams tmp;
+   ToneMappingOperator::ReinhardConstParams tmpc;
+   
+   tmo.setMethod(ToneMappingOperator::Reinhard);
+   if (!tmo.getParams(tmp))
+   {
+      std::cerr << "Failed to get tone mapping operator params" << std::endl;
+      return 1;
+   }
+   tmp.key = 0.2f;
+   tmp.Lavg = 1.5f;
+   tmp.Lwht = 9.2f;
+   tmo.validate();
+   
+   if (!tmo.isValid())
+   {
+      std::cerr << "Invalid tone mapping operator params" << std::endl;
+      return 1;
+   }
+   
+   tmo.copyParams(params);
+   float key = 0.0f;
+   float Lavg = 0.0f;
+   float Lwht = 0.0f;
+   if (params.get("key", key) && params.get("Lavg", Lavg) && params.get("Lwht", Lwht))
+   {
+      std::cout << "key=" << key << ", Lavg=" << Lavg << ", Lwht=" << Lwht << std::endl;
+      
+      tmo.getParams(tmpc);
+      if (float(tmpc.key) != key || float(tmpc.Lavg) != Lavg || float(tmpc.Lwht) != Lwht)
+      {
+         std::cerr << "Const params values are invalid" << std::endl;
+         return 1;
+      }
+      
+      const ToneMappingOperator &tmoc = tmo;
+      if (tmoc.getParams(tmp))
+      {
+         std::cerr << "Should failed to get tone mapping operator non-const params from const object" << std::endl;
+         return 1;
+      }
+   }
+   else
+   {
+      std::cerr << "Failed to get tone mapping operator params" << std::endl;
+      return 1;
+   }
    
    return 0;
 }

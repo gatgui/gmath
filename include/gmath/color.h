@@ -181,54 +181,70 @@ namespace gmath
    
    class GMATH_API ToneMappingOperator
    {
+   private:
+      template <typename T>
+      struct LinearParamsT
+      {
+         T Lmax;
+      };
+      
+      template <typename T>
+      struct GammaParamsT
+      {
+         T gain;
+         T gamma;
+      };
+      
+      template <typename T>
+      struct ReinhardParamsT
+      {
+         T key;
+         T Lavg;
+         T Lwht;
+      };
+   
    public:
       enum Method
       {
          Undefined = -1,
-         Simple,  // params: -                 [L' = L / (1 + L)]
-         Linear,  // params: Lmax              [L' = L / Lmax]
-         Gamma,   // params: gain (1.0), gamma [L' = gain * L^gamma]
-         Reinhard // params: key (0.18), Lavg, Lwht (<0 to disable)
+         Simple,  // params: -                       [L' = L / (1 + L)]
+         Linear,  // params: Lmax (0.0)              [L' = L / Lmax]
+         Gamma,   // params: gain (1.0), gamma (1.0) [L' = gain * L^gamma]
+         Reinhard // params: key (0.18), Lavg (0.0), Lwht (0.0) (<=0 to disable)
       };
       
-      struct LinearParams
-      {
-         float Lmax;
-      };
-
-      struct GammaParams
-      {
-         float gain;
-         float gamma;
-      };
-
-      struct ReinhardParams
-      {
-         float key;
-         float Lavg;
-         float Lwht;
-      };
+      typedef LinearParamsT<Params::accessor> LinearParams;
+      typedef LinearParamsT<Params::const_accessor> LinearConstParams;
+      
+      typedef GammaParamsT<Params::accessor> GammaParams;
+      typedef GammaParamsT<Params::const_accessor> GammaConstParams;
+      
+      typedef ReinhardParamsT<Params::accessor> ReinhardParams;
+      typedef ReinhardParamsT<Params::const_accessor> ReinhardConstParams;
       
    public:
       
       ToneMappingOperator(const ColorSpace &cs=ColorSpace::Rec709);
       ~ToneMappingOperator();
       
+      void setMethod(Method m);
       void setMethod(Method m, const Params &params);
-      void updateParams(const Params &params);
-      void updateParamsUnsafe(void *params);
+      void updateParams(const Params &params);  // don't need to call validate()
       bool validate();
       
       bool isValid() const;
       Method getMethod() const;
-      void getParams(Params &params) const;
-      void* getParamsUnsafe() const;
+      void copyParams(Params &params) const;
+      
+      // when accessing params via the returned pointer don't forget to call
+      //   validate() after any change
+      template <class P> bool getParams(P &p);
+      template <class P> bool getParams(P &p) const;
       
       RGB operator()(const RGB &input) const;
       XYZ operator()(const XYZ &input) const;
    
    private:
-      ToneMappingOperator();
       ToneMappingOperator& operator=(const ToneMappingOperator&);
    
    private:
@@ -237,6 +253,151 @@ namespace gmath
       void *mImpl;
       bool mValid;
    };
+   
+   namespace details
+   {
+      template <typename P> struct ToneMappingParams
+      {
+         static bool Bind(ToneMappingOperator &, void *, P &)
+         {
+            return false;
+         }
+         
+         static bool Bind(const ToneMappingOperator &, void *, P &)
+         {
+            return false;
+         }
+      };
+      
+      template <> struct ToneMappingParams<ToneMappingOperator::LinearParams>
+      {
+         static bool Bind(ToneMappingOperator &tmo, void *impl, ToneMappingOperator::LinearParams &p)
+         {
+            if (tmo.getMethod() != ToneMappingOperator::Linear || !impl)
+            {
+               return false;
+            }
+            ToneMappingOperator::LinearParams *pp = (ToneMappingOperator::LinearParams *)impl;
+            p = *pp;
+            return true;
+         }
+         
+         static bool Bind(const ToneMappingOperator &, void *, ToneMappingOperator::LinearParams &)
+         {
+            return false;
+         }
+      };
+      
+      template <> struct ToneMappingParams<ToneMappingOperator::LinearConstParams>
+      {
+         static bool Bind(ToneMappingOperator &tmo, void *impl, ToneMappingOperator::LinearConstParams &p)
+         {
+            return Bind((const ToneMappingOperator&)tmo, impl, p);
+         }
+         
+         static bool Bind(const ToneMappingOperator &tmo, void *impl, ToneMappingOperator::LinearConstParams &p)
+         {
+            if (tmo.getMethod() != ToneMappingOperator::Linear || !impl)
+            {
+               return false;
+            }
+            ToneMappingOperator::LinearParams *pp = (ToneMappingOperator::LinearParams *)impl;
+            p.Lmax = pp->Lmax;
+            return true;
+         }
+      };
+      
+      template <> struct ToneMappingParams<ToneMappingOperator::GammaParams>
+      {
+         static bool Bind(ToneMappingOperator &tmo, void *impl, ToneMappingOperator::GammaParams &p)
+         {
+            if (tmo.getMethod() != ToneMappingOperator::Gamma || !impl)
+            {
+               return false;
+            }
+            ToneMappingOperator::GammaParams *pp = (ToneMappingOperator::GammaParams *)impl;
+            p = *pp;
+            return true;
+         }
+         
+         static bool Bind(const ToneMappingOperator &, void *, ToneMappingOperator::GammaParams &)
+         {
+            return false;
+         }
+      };
+      
+      template <> struct ToneMappingParams<ToneMappingOperator::GammaConstParams>
+      {
+         static bool Bind(ToneMappingOperator &tmo, void *impl, ToneMappingOperator::GammaConstParams &p)
+         {
+            return Bind((const ToneMappingOperator&)tmo, impl, p);
+         }
+         
+         static bool Bind(const ToneMappingOperator &tmo, void *impl, ToneMappingOperator::GammaConstParams &p)
+         {
+            if (tmo.getMethod() != ToneMappingOperator::Gamma || !impl)
+            {
+               return false;
+            }
+            ToneMappingOperator::GammaParams *pp = (ToneMappingOperator::GammaParams *)impl;
+            p.gain = pp->gain;
+            p.gamma = pp->gamma;
+            return true;
+         }
+      };
+      
+      template <> struct ToneMappingParams<ToneMappingOperator::ReinhardParams>
+      {
+         static bool Bind(ToneMappingOperator &tmo, void *impl, ToneMappingOperator::ReinhardParams &p)
+         {
+            if (tmo.getMethod() != ToneMappingOperator::Reinhard || !impl)
+            {
+               return false;
+            }
+            ToneMappingOperator::ReinhardParams *pp = (ToneMappingOperator::ReinhardParams *)impl;
+            p = *pp;
+            return true;
+         }
+         
+         static bool Bind(const ToneMappingOperator &, void *, ToneMappingOperator::ReinhardParams &)
+         {
+            return false;
+         }
+      };
+      
+      template <> struct ToneMappingParams<ToneMappingOperator::ReinhardConstParams>
+      {
+         static bool Bind(ToneMappingOperator &tmo, void *impl, ToneMappingOperator::ReinhardConstParams &p)
+         {
+            return Bind((const ToneMappingOperator&)tmo, impl, p);
+         }
+         
+         static bool Bind(const ToneMappingOperator &tmo, void *impl, ToneMappingOperator::ReinhardConstParams &p)
+         {
+            if (tmo.getMethod() != ToneMappingOperator::Reinhard || !impl)
+            {
+               return false;
+            }
+            ToneMappingOperator::ReinhardParams *pp = (ToneMappingOperator::ReinhardParams *)impl;
+            p.key = pp->key;
+            p.Lavg = pp->Lavg;
+            p.Lwht = pp->Lwht;
+            return true;
+         }
+      };
+   }
+   
+   template <class P>
+   bool ToneMappingOperator::getParams(P &p)
+   {
+      return details::ToneMappingParams<P>::Bind(*this, mImpl, p);
+   }
+   
+   template <class P>
+   bool ToneMappingOperator::getParams(P &p) const
+   {
+      return details::ToneMappingParams<P>::Bind(*this, mImpl, p);
+   }
    
    class GMATH_API Blackbody
    {

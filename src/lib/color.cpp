@@ -774,6 +774,13 @@ const Chromaticity ColorSpace::getWhitePoint() const
 
 // ---
 
+template <class ParamAccessors>
+struct Impl
+{
+   ParamAccessors accessors;
+   Params params;
+};
+
 ToneMappingOperator::ToneMappingOperator(const ColorSpace &cs)
    : mColorSpace(cs)
    , mMethod(Undefined)
@@ -784,55 +791,77 @@ ToneMappingOperator::ToneMappingOperator(const ColorSpace &cs)
    
 ToneMappingOperator::~ToneMappingOperator()
 {
-   if (mImpl)
+   setMethod(Undefined);
+}
+
+void ToneMappingOperator::setMethod(Method m)
+{
+   if (mMethod != m)
    {
-      free(mImpl);
+      if (mImpl)
+      {
+         switch (mMethod)
+         {
+         case Linear:
+            delete (Impl<LinearParams>*)mImpl;
+            break;
+         case Gamma:
+            delete (Impl<GammaParams>*)mImpl;
+            break;
+         case Reinhard:
+            delete (Impl<ReinhardParams>*)mImpl;
+         default:
+            break;
+         }
+         mImpl = 0;
+      }
+      
+      mMethod = m;
+      mValid = true;
+      
+      switch (mMethod)
+      {
+      case Linear:
+         {
+            Impl<LinearParams> *impl = new Impl<LinearParams>();
+            impl->params.set("Lmax", 0.0f);
+            impl->accessors.Lmax = Params::accessor(impl->params, "Lmax");
+            mImpl = impl;
+            mValid = false;
+         }
+         break;
+      case Gamma:
+         {
+            Impl<GammaParams> *impl = new Impl<GammaParams>();
+            impl->params.set("gain", 1.0f);
+            impl->params.set("gamma", 1.0f);
+            impl->accessors.gain = Params::accessor(impl->params, "gain");
+            impl->accessors.gamma = Params::accessor(impl->params, "gamma");
+            mImpl = impl;
+         }
+         break;
+      case Reinhard:
+         {
+            Impl<ReinhardParams> *impl = new Impl<ReinhardParams>();
+            impl->params.set("key", 0.18f);
+            impl->params.set("Lavg", 0.0f);
+            impl->params.set("Lwht", 0.0f);
+            impl->accessors.key = Params::accessor(impl->params, "key");
+            impl->accessors.Lavg = Params::accessor(impl->params, "Lavg");
+            impl->accessors.Lwht = Params::accessor(impl->params, "Lwht");
+            mImpl = impl;
+            mValid = false;
+         }
+      default:
+         break;
+      }
    }
 }
 
 void ToneMappingOperator::setMethod(ToneMappingOperator::Method m, const Params &params)
 {
-   if (mMethod == m)
-   {
-      if (mImpl)
-      {
-         updateParams(params);
-      }
-   }
-   else
-   {
-      if (mImpl)
-      {
-         free(mImpl);
-         mImpl = 0;
-      }
-      
-      mMethod = m;
-      mValid = (mMethod != Undefined);
-      
-      if (mValid)
-      {
-         switch (mMethod)
-         {
-         case Linear:
-            mImpl = malloc(sizeof(LinearParams));
-            break;
-         case Gamma:
-            mImpl = malloc(sizeof(GammaParams));
-            break;
-         case Reinhard:
-            mImpl = malloc(sizeof(ReinhardParams));
-            break;
-         default:
-            break;
-         }
-         
-         if (mImpl)
-         {
-            updateParams(params);
-         }
-      }
-   }
+   setMethod(m);
+   updateParams(params);
 }
 
 void ToneMappingOperator::updateParams(const Params &params)
@@ -842,75 +871,56 @@ void ToneMappingOperator::updateParams(const Params &params)
       return;
    }
    
-   switch (mMethod)
-   {
-   case Linear:
-      {
-         LinearParams *p = (LinearParams*)mImpl;
-         mValid = (params.get("Lmax", p->Lmax) && p->Lmax > 0.0f);
-      }
-      break;
-   case Gamma:
-      {
-         GammaParams *p = (GammaParams*)mImpl;
-         if (!params.get("gain", p->gain))
-         {
-            p->gain = 1.0f;
-         }
-         mValid = params.get("gamma", p->gamma);
-      }
-      break;
-   case Reinhard:
-      {
-         ReinhardParams *p = (ReinhardParams*)mImpl;
-         if (!params.get("key", p->key))
-         {
-            p->key = 0.18f;
-         }
-         if (!params.get("Lwht", p->Lwht))
-         {
-            p->Lwht = 0.0f;
-         }
-         mValid = (params.get("Lavg", p->Lavg) && p->Lavg > 0.0f);
-      }
-      break;
-   default:
-      break;
-   }
-}
-
-void ToneMappingOperator::updateParamsUnsafe(void *params)
-{
-   if (!mImpl)
-   {
-      return;
-   }
+   mValid = true;
    
    switch (mMethod)
    {
    case Linear:
       {
-         LinearParams *dst = (LinearParams*)mImpl;
-         LinearParams *src = (LinearParams*)params;
-         *dst = *src;
-         mValid = (dst->Lmax > 0.0f);
+         Impl<LinearParams> *impl = (Impl<LinearParams>*)mImpl;
+         float Lmax = 0.0f;
+         if (params.get("Lmax", Lmax))
+         {
+            impl->accessors.Lmax = Lmax;
+         }
+         mValid = (float(impl->accessors.Lmax) > 0.0f);
       }
       break;
    case Gamma:
       {
-         GammaParams *dst = (GammaParams*)mImpl;
-         GammaParams *src = (GammaParams*)params;
-         *dst = *src;
+         Impl<GammaParams> *impl = (Impl<GammaParams>*)mImpl;
+         float gain = 1.0f;
+         float gamma = 1.0f;
+         if (params.get("gain", gain))
+         {
+            impl->accessors.gain = gain;
+         }
+         if (params.get("gamma", gamma))
+         {
+            impl->accessors.gamma = gamma;
+         }
       }
       break;
    case Reinhard:
       {
-         ReinhardParams *dst = (ReinhardParams*)mImpl;
-         ReinhardParams *src = (ReinhardParams*)params;
-         *dst = *src;
-         mValid = (dst->Lavg > 0.0f);
+         Impl<ReinhardParams> *impl = (Impl<ReinhardParams>*)mImpl;
+         float key = 0.18f;
+         float Lavg = 0.0f;
+         float Lwht = 0.0f;
+         if (params.get("key", key))
+         {
+            impl->accessors.key = key;
+         }
+         if (params.get("Lavg", Lavg))
+         {
+            impl->accessors.Lavg = Lavg;
+         }
+         if (params.get("Lwht", Lwht))
+         {
+            impl->accessors.Lwht = Lwht;
+         }
+         mValid = (float(impl->accessors.Lavg) > 0.0f);
       }
-      break;
    default:
       break;
    }
@@ -920,7 +930,7 @@ bool ToneMappingOperator::validate()
 {
    if (!mImpl)
    {
-      mValid = false;
+      mValid = (mMethod == Simple);
    }
    else
    {
@@ -930,14 +940,14 @@ bool ToneMappingOperator::validate()
       {
       case Linear:
          {
-            LinearParams *p = (LinearParams*)mImpl;
-            mValid = (p->Lmax > 0.0f);
+            Impl<LinearParams> *impl = (Impl<LinearParams>*)mImpl;
+            mValid = (float(impl->accessors.Lmax) > 0.0f);
          }
          break;
       case Reinhard:
          {
-            ReinhardParams *p = (ReinhardParams*)mImpl;
-            mValid = (p->Lavg > 0.0f);
+            Impl<ReinhardParams> *impl = (Impl<ReinhardParams>*)mImpl;
+            mValid = (float(impl->accessors.Lavg) > 0.0f);
          }
       default:
          break;
@@ -949,15 +959,15 @@ bool ToneMappingOperator::validate()
 
 bool ToneMappingOperator::isValid() const
 {
-  return (mImpl && mValid);
+  return mValid;
 }
 
 ToneMappingOperator::Method ToneMappingOperator::getMethod() const
 {
-   return (isValid() ? mMethod : Undefined);
+   return mMethod;
 }
 
-void ToneMappingOperator::getParams(Params &params) const
+void ToneMappingOperator::copyParams(Params &params) const
 {
    params.clear();
    
@@ -966,35 +976,17 @@ void ToneMappingOperator::getParams(Params &params) const
       switch (mMethod)
       {
       case Linear:
-         {
-            LinearParams *p = (LinearParams*)mImpl;
-            params.set("Lmax", p->Lmax);
-         }
+         params = ((Impl<LinearParams>*)mImpl)->params;
          break;
       case Gamma:
-         {
-            GammaParams *p = (GammaParams*)mImpl;
-            params.set("gain", p->gain);
-            params.set("gamma", p->gamma);
-         }
+         params = ((Impl<GammaParams>*)mImpl)->params;
          break;
       case Reinhard:
-         {
-            ReinhardParams *p = (ReinhardParams*)mImpl;
-            params.set("key", p->key);
-            params.set("Lavg", p->Lavg);
-            params.set("Lwht", p->Lwht);
-         }
-         break;
+         params = ((Impl<ReinhardParams>*)mImpl)->params;
       default:
          break;
       }
    }
-}
-
-void* ToneMappingOperator::getParamsUnsafe() const
-{
-   return mImpl;
 }
 
 XYZ ToneMappingOperator::operator()(const XYZ &input) const
@@ -1013,23 +1005,24 @@ XYZ ToneMappingOperator::operator()(const XYZ &input) const
       break;
    case Linear:
       {
-         LinearParams *p = (LinearParams*)mImpl;
-         xyz.y = xyz.y / p->Lmax;
+         Impl<LinearParams> *impl = (Impl<LinearParams>*)mImpl;
+         xyz.y = xyz.y / float(impl->accessors.Lmax);
       }
       break;
    case Gamma:
       {
-         GammaParams *p = (GammaParams*)mImpl;
-         xyz.y = p->gain * powf(xyz.y, p->gamma);
+         Impl<GammaParams> *impl = (Impl<GammaParams>*)mImpl;
+         xyz.y = float(impl->accessors.gain) * powf(xyz.y, float(impl->accessors.gamma));
       }
       break;
    case Reinhard:
       {
-         ReinhardParams *p = (ReinhardParams*)mImpl;
-         float L = p->key * xyz.y / p->Lavg;
-         if (p->Lwht > 0.0f)
+         Impl<ReinhardParams> *impl = (Impl<ReinhardParams>*)mImpl;
+         float L = float(impl->accessors.key) * xyz.y / float(impl->accessors.Lavg);
+         float Lwht = float(impl->accessors.Lwht);
+         if (Lwht > 0.0f)
          {
-            xyz.y = L * (1.0f + L / (p->Lwht * p->Lwht)) / (1.0f + L);
+            xyz.y = L * (1.0f + L / (Lwht * Lwht)) / (1.0f + L);
          }
          else
          {
