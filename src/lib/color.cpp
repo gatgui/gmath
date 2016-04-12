@@ -1068,7 +1068,7 @@ RGB Blackbody::GetRGB(float temp, const ColorSpace &cs, bool normalize)
    if (normalize)
    {
       float M = std::max(out.r, std::max(out.g, out.b));
-      if (M > 0.0f)
+      if (M > 0.000001f)
       {
          out /= M;
       }
