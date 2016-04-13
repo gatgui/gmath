@@ -93,7 +93,7 @@ int main(int, char**)
       std::cout << "  xyz: " << xyz << std::endl;
       std::cout << "  rgb: " << Blackbody::GetRGB(temp, ColorSpace::Rec709, false) << std::endl;
       std::cout << "  rgb (normalized): " << Blackbody::GetRGB(temp, ColorSpace::Rec709, true) << std::endl;
-      std::cout << "  chromaticity: " << XYZtoChromaticity(temp) << std::endl;
+      std::cout << "  chromaticity: " << XYZtoChromaticity(xyz) << std::endl;
    }
 
    XYZ D50 = ChromaticityYtoXYZ(Chromaticity::IllumD50, 1.0f);
