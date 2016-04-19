@@ -91,11 +91,14 @@ int main(int, char**)
 
       std::cout << "Color temperature " << temp << std::endl;
       std::cout << "  xyz: " << xyz << std::endl;
-      std::cout << "  xyz (Planckian Locus): " << Blackbody::GetPlanckianLocusXYZ(temp) << std::endl;
       std::cout << "  rgb: " << Blackbody::GetRGB(temp, ColorSpace::Rec709, false) << std::endl;
       std::cout << "  rgb (normalized): " << Blackbody::GetRGB(temp, ColorSpace::Rec709, true) << std::endl;
-      std::cout << "  rgb (Planckian Locus): " << Blackbody::GetPlanckianLocusRGB(temp, ColorSpace::Rec709, false) << std::endl;
-      std::cout << "  rgb (Planckian Locus / normalized): " << Blackbody::GetPlanckianLocusRGB(temp, ColorSpace::Rec709, true) << std::endl;
+      if (Blackbody::CanApprox(temp))
+      {
+         std::cout << "  xyz (approximation): " << Blackbody::GetXYZApprox(temp) << std::endl;
+         std::cout << "  rgb (approximation): " << Blackbody::GetRGBApprox(temp, ColorSpace::Rec709, false) << std::endl;
+         std::cout << "  rgb (approximation - normalized): " << Blackbody::GetRGBApprox(temp, ColorSpace::Rec709, true) << std::endl;
+      }
       std::cout << "  chromaticity: " << XYZtoChromaticity(xyz) << std::endl;
    }
 

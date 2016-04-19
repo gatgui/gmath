@@ -422,11 +422,12 @@ namespace gmath
       //       to normalize the color to a human visible range
       static RGB GetRGB(float temp, const ColorSpace &cs, bool normalize=true);
 
-      // Aprroximation based on Planckian Locus
+      // Planckian Locus aprroximation 
       //   https://en.wikipedia.org/wiki/Planckian_locus
       // Valid for temp in [1667, 25000]
-      static XYZ GetPlanckianLocusXYZ(float temp);
-      static RGB GetPlanckianLocusRGB(float temp, const ColorSpace &cs, bool normalize=true);
+      static bool CanApprox(float temp);
+      static XYZ GetXYZApprox(float temp);
+      static RGB GetRGBApprox(float temp, const ColorSpace &cs, bool normalize=true);
       
    protected:
       static void OutOfGamutRemap(RGB &col);

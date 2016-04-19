@@ -1176,7 +1176,12 @@ RGB Blackbody::GetRGB(float temp, const ColorSpace &cs, bool normalize)
    return out;
 }
 
-XYZ Blackbody::GetPlanckianLocusXYZ(float temp)
+bool Blackbody::CanApprox(float temp)
+{
+  return (temp >= 1667 && temp <= 25000);
+}
+
+XYZ Blackbody::GetXYZApprox(float temp)
 {
    float xc = 0.0f;
    float yc = 0.0f;
@@ -1224,9 +1229,9 @@ XYZ Blackbody::GetPlanckianLocusXYZ(float temp)
    }
 }
 
-RGB Blackbody::GetPlanckianLocusRGB(float temp, const ColorSpace &cs, bool normalize)
+RGB Blackbody::GetRGBApprox(float temp, const ColorSpace &cs, bool normalize)
 {
-   RGB out = cs.XYZtoRGB(GetPlanckianLocusXYZ(temp));
+   RGB out = cs.XYZtoRGB(GetXYZApprox(temp));
    
    OutOfGamutRemap(out);
 
