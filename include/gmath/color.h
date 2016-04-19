@@ -421,6 +421,16 @@ namespace gmath
       //       will remap out of gamut colors (uniform color shifting) and gives you the option
       //       to normalize the color to a human visible range
       static RGB GetRGB(float temp, const ColorSpace &cs, bool normalize=true);
+
+      // Aprroximation based on Planckian Locus
+      //   https://en.wikipedia.org/wiki/Planckian_locus
+      // Valid for temp in [1667, 25000]
+      static XYZ GetPlanckianLocusXYZ(float temp);
+      static RGB GetPlanckianLocusRGB(float temp, const ColorSpace &cs, bool normalize=true);
+      
+   protected:
+      static void OutOfGamutRemap(RGB &col);
+      static void Normalize(RGB &col);
    };
 
    // ---

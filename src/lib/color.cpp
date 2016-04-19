@@ -1136,6 +1136,27 @@ float Blackbody::operator()(float lambda) const
    return float(c1 * pow(l, -5) / (exp(c2 / (l * temperature)) - 1));
 }
 
+void Blackbody::OutOfGamutRemap(RGB &col)
+{
+   float w = -std::min(0.0f, std::min(col.r, std::min(col.g, col.b)));
+   if (w > 0.0f)
+   {
+      // col lies outside of the target color gamut
+      col.r += w;
+      col.g += w;
+      col.b += w;
+   }
+}
+
+void Blackbody::Normalize(RGB &col)
+{
+   float M = std::max(col.r, std::max(col.g, col.b));
+   if (M > 0.000001f)
+   {
+      col /= M;
+   }
+}
+
 XYZ Blackbody::GetXYZ(float temp)
 {
    return BBC(temp);
@@ -1145,24 +1166,75 @@ RGB Blackbody::GetRGB(float temp, const ColorSpace &cs, bool normalize)
 {
    RGB out = cs.XYZtoRGB(BBC(temp));
 
-   float w = -std::min(0.0f, std::min(out.r, std::min(out.g, out.b)));
-   if (w > 0.0f)
-   {
-      // out lies outside of the target color gamut
-      out.r += w;
-      out.g += w;
-      out.b += w;
-   }
+   OutOfGamutRemap(out);
 
    if (normalize)
    {
-      float M = std::max(out.r, std::max(out.g, out.b));
-      if (M > 0.000001f)
-      {
-         out /= M;
-      }
+      Normalize(out);
    }
 
+   return out;
+}
+
+XYZ Blackbody::GetPlanckianLocusXYZ(float temp)
+{
+   float xc = 0.0f;
+   float yc = 0.0f;
+   float temp2 = temp * temp;
+   float arg1 = 1e9f / (temp * temp2);
+   float arg2 = 1e6f / temp2;
+   float arg3 = 1e3f / temp;
+   
+   if (temp >= 1667 && temp <= 4000)
+   {
+      xc = -0.2661239f * arg1 - 0.2343580f * arg2 + 0.8776956f * arg3 + 0.179910f;
+   }
+   else if (temp > 4000 && temp <= 25000)
+   {
+      xc = -3.0258469f * arg1 + 2.1070379f * arg2 + 0.2226347f * arg3 + 0.240390f;
+   }
+   
+   float xc2 = xc * xc;
+   float xc3 = xc * xc2;
+   
+   if (temp >= 1667 && temp <= 2222)
+   {
+      yc = -1.1063814f * xc3 - 1.34811020f * xc2 + 2.18555832f * xc - 0.20219683f;
+   }
+   else if (temp > 2222 && temp <= 4000)
+   {
+      yc = -0.9549476f * xc3 - 1.37418593f * xc2 + 2.09137015f * xc - 0.16748867f;
+   }
+   else if (temp > 4000 && temp <= 25000)
+   {
+      yc = 3.0817580f * xc3 - 5.87338670f * xc2 + 3.75112997f * xc - 0.37001483f;
+   }
+   
+   if (fabsf(yc) > 0.000001f)
+   {
+      float iyc = 1.0f / yc;
+      
+      return XYZ(xc * iyc, 1.0f, (1.0f - xc - yc) * iyc);
+   }
+   else
+   {
+      float athird = 1.0f / 3.0f;
+      
+      return ChromaticityYtoXYZ(Chromaticity(athird, athird), (temp < 1667 ? 0.0f : 1.0f));
+   }
+}
+
+RGB Blackbody::GetPlanckianLocusRGB(float temp, const ColorSpace &cs, bool normalize)
+{
+   RGB out = cs.XYZtoRGB(GetPlanckianLocusXYZ(temp));
+   
+   OutOfGamutRemap(out);
+
+   if (normalize)
+   {
+      Normalize(out);
+   }
+   
    return out;
 }
 
