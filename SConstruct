@@ -38,6 +38,7 @@ prjs = [
     "install_name" : "libgmath.0.dylib",
     "incdirs"      : ["include"],
     "srcs"         : glob.glob("src/lib/*.cpp"),
+    "install"      : {"include": ["include/gmath"]},
     "defs"         : ["GMATH_STATIC" if staticBuild else "GMATH_EXPORTS"]
   },
   { "name"    : "gmath_tests",
