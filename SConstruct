@@ -29,30 +29,28 @@ def RequireGmath(subdir=None):
 
 Export("RequireGmath")
 
+
 prjs = [
-  { "name"    : "gmath",
-    "type"    : ("staticlib" if staticBuild else "sharedlib"),
-    "incdirs" : ["include"],
-    "srcs"    : glob.glob("src/lib/*.cpp"),
-    "defs"    : ["GMATH_STATIC" if staticBuild else "GMATH_EXPORTS"]
+  { "name"         : "gmath",
+    "type"         : ("staticlib" if staticBuild else "sharedlib"),
+    "version"      : "0.2.0",
+    "soname"       : "libgmath.so.0",
+    "install_name" : "libgmath.0.dylib",
+    "incdirs"      : ["include"],
+    "srcs"         : glob.glob("src/lib/*.cpp"),
+    "defs"         : ["GMATH_STATIC" if staticBuild else "GMATH_EXPORTS"]
   },
   { "name"    : "gmath_tests",
     "type"    : "testprograms",
-    "incdirs" : ["include"],
     "srcs"    : glob.glob("src/test/*.cpp"),
-    "libs"    : ["gmath"],
-    "custom"  : [gl.Require, glut.Require, NoDeprecated],
-    "defs"    : (["GMATH_STATIC"] if staticBuild else [])
+    "custom"  : [RequireGmath(), gl.Require, glut.Require, NoDeprecated]
   },
   { "name"    : "luagmath",
     "type"    : "dynamicmodule",
-    "incdirs" : ["include"],
     "srcs"    : glob.glob("src/lua/*.cpp"),
-    "libs"    : ["gmath"],
     "ext"     : ".so",
     "prefix"  : "lua",
-    "custom"  : [lua.Require],
-    "defs"    : (["GMATH_STATIC"] if staticBuild else [])
+    "custom"  : [lua.Require, RequireGmath()]
   }
 ]
 
