@@ -21,13 +21,15 @@ USA.
 
 */
 
-#include <gmath/gmath.h>
+#include <gmath/all.h>
 #include <gmath/curve.h>
 #ifdef __APPLE__
 # include <GLUT/glut.h>
 #else
 # include <GL/glut.h>
 #endif
+
+using namespace gmath;
 
 // ---
 
