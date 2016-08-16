@@ -21,12 +21,14 @@ USA.
 
 */
 
-#include <gmath/gmath.h>
+#include <gmath/all.h>
 #ifdef __APPLE__
 # include <GLUT/glut.h>
 #else
 # include <GL/glut.h>
 #endif
+
+using namespace gmath;
 
 typedef NURBS<2> NURBS2;
 typedef NURBS<3> NURBS3;

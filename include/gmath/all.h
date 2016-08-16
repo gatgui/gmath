@@ -47,6 +47,7 @@ USA.
 #include <gmath/curve.h>
 #include <gmath/fft.h>
 #include <gmath/color.h>
+#include <gmath/params.h>
 
 #endif
 
