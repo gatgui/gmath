@@ -1093,6 +1093,7 @@ public:
    XYZ operator()(float temp)
    {
       int idx = int(temp);
+      
       if (idx < 0 || idx >= mCount)
       {
          // value not cached, compute it
@@ -1101,7 +1102,15 @@ public:
       }
       else
       {
-         return mValues[idx];
+         float dt = temp - float(idx);
+         if (dt > 0 && idx + 1 < mCount)
+         {
+            return mValues[idx] + dt * (mValues[idx + 1] - mValues[idx]);
+         }
+         else
+         {
+            return mValues[idx];
+         }
       }
    }
 
