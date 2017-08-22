@@ -1048,6 +1048,45 @@ RGB ToneMappingOperator::operator()(const RGB &input) const
 class BlackbodyColor
 {
 public:
+   ~BlackbodyColor()
+   {
+      if (mValues)
+      {
+         delete[] mValues;
+      }
+   }
+
+   XYZ operator()(float temp)
+   {
+      int idx = int(temp);
+      
+      if (idx < 0 || idx >= mCount)
+      {
+         // value not cached, compute it
+         Blackbody bb(temp);
+         return IntegrateVisibleSpectrum(bb, (mUseObs1964 ? StandardObserver::CIE1964 : StandardObserver::CIE1931));
+      }
+      else
+      {
+         float dt = temp - float(idx);
+         if (dt > 0 && idx + 1 < mCount)
+         {
+            return mValues[idx] + dt * (mValues[idx + 1] - mValues[idx]);
+         }
+         else
+         {
+            return mValues[idx];
+         }
+      }
+   }
+
+   static BlackbodyColor& Get(int maxTemp=20000)
+   {
+      static BlackbodyColor sTheInstance(maxTemp);
+      return sTheInstance;
+   }
+
+private:
    BlackbodyColor(int maxTemp=20000)
    {
       int evi = 0;
@@ -1082,46 +1121,16 @@ public:
       }
    }
 
-   ~BlackbodyColor()
-   {
-      if (mValues)
-      {
-         delete[] mValues;
-      }
-   }
-
-   XYZ operator()(float temp)
-   {
-      int idx = int(temp);
-      
-      if (idx < 0 || idx >= mCount)
-      {
-         // value not cached, compute it
-         Blackbody bb(temp);
-         return IntegrateVisibleSpectrum(bb, (mUseObs1964 ? StandardObserver::CIE1964 : StandardObserver::CIE1931));
-      }
-      else
-      {
-         float dt = temp - float(idx);
-         if (dt > 0 && idx + 1 < mCount)
-         {
-            return mValues[idx] + dt * (mValues[idx + 1] - mValues[idx]);
-         }
-         else
-         {
-            return mValues[idx];
-         }
-      }
-   }
-
-private:
-
    int mCount;
    XYZ *mValues;
    bool mUseObs1964;
 };
 
-static BlackbodyColor BBC;
+inline XYZ BBC(float temp)
+{
+   return BlackbodyColor::Get()(temp);
+}
+
 static const double SpeedOfLight = 2.99792458e8;
 static const double Planck = 6.62607004e-34;
 static const double Boltzmann = 1.3806485279e-23;
