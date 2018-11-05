@@ -204,6 +204,7 @@ const Chromaticity Chromaticity::IllumB(0.34842f, 0.35161f);
 const Chromaticity Chromaticity::IllumC(0.31006f, 0.31616f);
 const Chromaticity Chromaticity::IllumD50(0.34567f, 0.35850f);
 const Chromaticity Chromaticity::IllumD55(0.33242f, 0.34743f);
+const Chromaticity Chromaticity::IllumD60(0.32168f, 0.33767f);
 const Chromaticity Chromaticity::IllumD65(0.31271f, 0.32902f);
 const Chromaticity Chromaticity::IllumD75(0.29902f, 0.31485f);
 const Chromaticity Chromaticity::IllumE(1.0f/3.0f, 1.0f/3.0f);
@@ -460,6 +461,7 @@ const ColorSpace ColorSpace::SMPTE("SMPTE C",
 // http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
 // https://en.wikipedia.org/wiki/Wide-gamut_RGB_color_space
 // http://www.vocas.nl/webfm_send/964
+// https://en.wikipedia.org/wiki/Academy_Color_Encoding_System
 const ColorSpace ColorSpace::CIE("CIE RGB",
                                  Chromaticity(0.7347f, 0.2653f),
                                  Chromaticity(0.2738f, 0.7174f),
@@ -490,6 +492,17 @@ const ColorSpace ColorSpace::AdobeRGB("Adobe RGB",
                                       Chromaticity(0.21f, 0.71f),
                                       Chromaticity(0.15f, 0.06f),
                                       Chromaticity::IllumD65);
+const ColorSpace ColorSpace::ACES_AP0("ACES2065-1",
+                                      Chromaticity(0.7347f, 0.2653f),
+                                      Chromaticity(0.0f, 1.0f),
+                                      Chromaticity(0.0001f, -0.077f),
+                                      Chromaticity::IllumD60);
+const ColorSpace ColorSpace::ACES_AP1("ACEScg",
+                                      Chromaticity(0.713f, 0.293f),
+                                      Chromaticity(0.165f, 0.83f),
+                                      Chromaticity(0.128f, 0.044f),
+                                      Chromaticity::IllumD60);
+
 
 // https://en.wikipedia.org/wiki/YUV
 static const float Umax = 0.436f;

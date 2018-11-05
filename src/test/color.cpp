@@ -44,7 +44,9 @@ int main(int, char**)
       &ColorSpace::DCIP3,
       &ColorSpace::AdobeWide,
       &ColorSpace::AlexaWide,
-      &ColorSpace::AdobeRGB
+      &ColorSpace::AdobeRGB,
+      &ColorSpace::ACES_AP0,
+      &ColorSpace::ACES_AP1
    };
 
    size_t ncs = sizeof(csl) / sizeof(const ColorSpace*);

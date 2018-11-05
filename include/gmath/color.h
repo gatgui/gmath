@@ -76,6 +76,7 @@ namespace gmath
       static const Chromaticity IllumC;
       static const Chromaticity IllumD50;
       static const Chromaticity IllumD55;
+      static const Chromaticity IllumD60;
       static const Chromaticity IllumD65;
       static const Chromaticity IllumD75;
       static const Chromaticity IllumE;
@@ -166,6 +167,8 @@ namespace gmath
       static const ColorSpace AdobeWide;
       static const ColorSpace AlexaWide;
       static const ColorSpace AdobeRGB;
+      static const ColorSpace ACES_AP0; // ACES2065-1
+      static const ColorSpace ACES_AP1; // ACEScg
 
    private:
       ColorSpace();
