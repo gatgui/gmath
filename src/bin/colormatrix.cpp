@@ -51,6 +51,8 @@ const gmath::ColorSpace* GetColorspace(const std::string &name)
 
 int main(int argc, char **argv)
 {
+   std::string srcCSName;
+   std::string dstCSName;
    const gmath::ColorSpace *srcCS = 0;
    const gmath::ColorSpace *dstCS = 0;
    std::string arg;
@@ -93,11 +95,13 @@ int main(int argc, char **argv)
       }
       else if (op == SetSrcCS)
       {
+         srcCSName = arg;
          srcCS = GetColorspace(arg);
          op = NoOP;
       }
       else if (op == SetDstCS)
       {
+         dstCSName = arg;
          dstCS = GetColorspace(arg);
          op = NoOP;
       }
@@ -115,7 +119,36 @@ int main(int argc, char **argv)
    }
    else
    {
+      gmath::RGB w(1, 1, 1);
+      gmath::XYZ srcW = gmath::ChromaticityYtoXYZ(srcCS->getWhitePoint(), 1.0f);
+      gmath::XYZ dstW = gmath::ChromaticityYtoXYZ(dstCS->getWhitePoint(), 1.0f);
+      gmath::Matrix3 CAM;
+
+      std::cout << "-- RGB / XYZ conversion" << std::endl;
+      std::cout << srcCSName << " -> XYZ: " << srcCS->getRGBtoXYZMatrix() << std::endl;
+      std::cout << "XYZ -> " << dstCSName << ": " << dstCS->getXYZtoRGBMatrix() << std::endl;
+
+      std::cout << "== No adaptation:" << std::endl;
       std::cout << (srcCS->getRGBtoXYZMatrix() * dstCS->getXYZtoRGBMatrix()) << std::endl;
+      std::cout << "== VonKries adaptation:" << std::endl;
+      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_VonKries);
+      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
+      std::cout << "== Bradford adaptation:" << std::endl;
+      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_Bradford);
+      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
+      std::cout << "== Sharp adaptation:" << std::endl;
+      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_Sharp);
+      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
+      std::cout << "== CMC2000 adaptation:" << std::endl;
+      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_CMC2000);
+      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
+      std::cout << "== 02 adaptation:" << std::endl;
+      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_02);
+      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
+      std::cout << "== XYZ adaptation:" << std::endl;
+      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_XYZ);
+      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
+
       return 0;
    }
 }
