@@ -36,6 +36,11 @@ prjs = [
     "srcs"    : glob.glob("src/test/*.cpp"),
     "custom"  : [RequireGmath, gl.Require, glut.Require, NoDeprecated]
   },
+  { "name"    : "gmath_tools",
+    "type"    : "testprograms",
+    "srcs"    : glob.glob("src/bin/*.cpp"),
+    "custom"  : [RequireGmath, gl.Require, glut.Require, NoDeprecated]
+  },
   { "name"    : "luagmath",
     "type"    : "dynamicmodule",
     "srcs"    : glob.glob("src/lua/*.cpp"),
