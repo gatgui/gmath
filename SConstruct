@@ -1,7 +1,12 @@
 import excons
 import glob
 import excons.tools
-from excons.tools import lua, gl, glut
+from excons.tools import lua
+from excons.tools import gl
+from excons.tools import glut
+
+
+env = excons.MakeBaseEnv()
 
 staticBuild = (excons.GetArgument("static", "0", int) == 1)
 
@@ -39,7 +44,7 @@ prjs = [
   { "name"    : "gmath_tools",
     "type"    : "testprograms",
     "srcs"    : glob.glob("src/bin/*.cpp"),
-    "custom"  : [RequireGmath, gl.Require, glut.Require, NoDeprecated]
+    "custom"  : [RequireGmath, NoDeprecated]
   },
   { "name"    : "luagmath",
     "type"    : "dynamicmodule",
@@ -50,7 +55,6 @@ prjs = [
   }
 ]
 
-env = excons.MakeBaseEnv()
 excons.DeclareTargets(env, prjs)
 
 Default(["gmath"])
