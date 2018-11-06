@@ -6,7 +6,8 @@ enum FlagOp
 {
    NoOP = 0,
    SetSrcCS,
-   SetDstCS
+   SetDstCS,
+   SetCAT
 };
 
 const gmath::ColorSpace* GetColorspace(const std::string &name)
@@ -49,14 +50,49 @@ const gmath::ColorSpace* GetColorspace(const std::string &name)
    }
 }
 
+int GetChromaticAdaptationTransform(const std::string &name)
+{
+   if (name == "VonKries")
+   {
+      return gmath::CAT_VonKries;
+   }
+   else if (name == "Bradford")
+   {
+      return gmath::CAT_Bradford;
+   }
+   else if (name == "Sharp")
+   {
+      return gmath::CAT_Sharp;
+   }
+   else if (name == "CMC2000")
+   {
+      return gmath::CAT_CMC2000;
+   }
+   else if (name == "CAT02")
+   {
+      return gmath::CAT_02;
+   }
+   else if (name == "XYZ")
+   {
+      return gmath::CAT_XYZ;
+   }
+   else
+   {
+      return -1;
+   }
+}
+
 int main(int argc, char **argv)
 {
    std::string srcCSName;
    std::string dstCSName;
+   std::string catName;
    const gmath::ColorSpace *srcCS = 0;
    const gmath::ColorSpace *dstCS = 0;
+   int cat = -1;
    std::string arg;
    FlagOp op = NoOP;
+   bool verbose = false;
 
    for (int i=1; i<argc; ++i)
    {
@@ -71,10 +107,18 @@ int main(int argc, char **argv)
          {
             op = SetDstCS;
          }
+         else if (arg == "-c" || arg == "--cat")
+         {
+            op = SetCAT;
+         }
+         else if (arg == "-v" || arg == "--verbose")
+         {
+            verbose = true;
+         }
          else if (arg == "-h" || arg == "--help")
          {
             std::cout << "USAGE" << std::endl;
-            std::cout << "  colormatrix -sc/--source-colorspace <str> -dc/--destination-colorspace <str> (-h/--help)" << std::endl;
+            std::cout << "  colormatrix -sc/--source-colorspace <str> -dc/--destination-colorspace <str> (-c/--cat <str>) (-v/--verbose) (-h/--help)" << std::endl;
             std::cout << std::endl;
             std::cout << "Available color spaces:" << std::endl;
             std::cout << "  CIE RGB" << std::endl;
@@ -85,6 +129,14 @@ int main(int argc, char **argv)
             std::cout << "  Adobe RGB" << std::endl;
             std::cout << "  ACES2065-1" << std::endl;
             std::cout << "  ACEScg" << std::endl;
+            std::cout << std::endl;
+            std::cout << "Available CATs (Chromatic Adaptation Transform):" << std::endl;
+            std::cout << "  VonKries" << std::endl;
+            std::cout << "  Bradford" << std::endl;
+            std::cout << "  Sharp" << std::endl;
+            std::cout << "  CMC2000" << std::endl;
+            std::cout << "  CAT02" << std::endl;
+            std::cout << "  XYX" << std::endl;
             std::cout << std::endl;
             return 0;
          }
@@ -105,6 +157,12 @@ int main(int argc, char **argv)
          dstCS = GetColorspace(arg);
          op = NoOP;
       }
+      else if (op == SetCAT)
+      {
+         catName = arg;
+         cat = GetChromaticAdaptationTransform(arg);
+         op = NoOP;
+      }
       else
       {
          std::cerr << "Unknown operation. Ignore argument '" << arg.c_str() << "'" << std::endl;
@@ -119,35 +177,22 @@ int main(int argc, char **argv)
    }
    else
    {
-      gmath::RGB w(1, 1, 1);
-      gmath::XYZ srcW = gmath::ChromaticityYtoXYZ(srcCS->getWhitePoint(), 1.0f);
-      gmath::XYZ dstW = gmath::ChromaticityYtoXYZ(dstCS->getWhitePoint(), 1.0f);
+      if (verbose)
+      {
+         std::cout << srcCSName << " -> XYZ: " << srcCS->getRGBtoXYZMatrix() << std::endl;
+         std::cout << "XYZ -> " << dstCSName << ": " << dstCS->getXYZtoRGBMatrix() << std::endl;
+      }
+
       gmath::Matrix3 CAM;
+      if (cat != -1)
+      {
+         gmath::XYZ srcW = gmath::ChromaticityYtoXYZ(srcCS->getWhitePoint(), 1.0f);
+         gmath::XYZ dstW = gmath::ChromaticityYtoXYZ(dstCS->getWhitePoint(), 1.0f);
+         CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, (gmath::ChromaticAdaptationTransform)cat);
+         std::cout << "CAT " << catName << ": " << CAM << std::endl;
+      }
 
-      std::cout << "-- RGB / XYZ conversion" << std::endl;
-      std::cout << srcCSName << " -> XYZ: " << srcCS->getRGBtoXYZMatrix() << std::endl;
-      std::cout << "XYZ -> " << dstCSName << ": " << dstCS->getXYZtoRGBMatrix() << std::endl;
-
-      std::cout << "== No adaptation:" << std::endl;
-      std::cout << (srcCS->getRGBtoXYZMatrix() * dstCS->getXYZtoRGBMatrix()) << std::endl;
-      std::cout << "== VonKries adaptation:" << std::endl;
-      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_VonKries);
-      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
-      std::cout << "== Bradford adaptation:" << std::endl;
-      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_Bradford);
-      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
-      std::cout << "== Sharp adaptation:" << std::endl;
-      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_Sharp);
-      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
-      std::cout << "== CMC2000 adaptation:" << std::endl;
-      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_CMC2000);
-      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
-      std::cout << "== 02 adaptation:" << std::endl;
-      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_02);
-      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
-      std::cout << "== XYZ adaptation:" << std::endl;
-      CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, gmath::CAT_XYZ);
-      std::cout << (srcCS->getRGBtoXYZMatrix() * CAM * dstCS->getXYZtoRGBMatrix()) << std::endl;
+      std::cout << (dstCS->getXYZtoRGBMatrix() * CAM * srcCS->getRGBtoXYZMatrix()) << std::endl;
 
       return 0;
    }

@@ -153,6 +153,9 @@ namespace gmath
       void getPrimaries(Chromaticity &r, Chromaticity &g, Chromaticity &b) const;
       const Chromaticity getWhitePoint() const;
 
+      // NOTE: Colors to transform must be postmultiplied
+      // XYZ_Vector = RGBtoXYZ_Matrix * RGB_Vector
+      // RGB_Vector = XYZtoRGB_Matrix * XYZ_Vector
       const Matrix3& getRGBtoXYZMatrix() const;
       const Matrix3& getXYZtoRGBMatrix() const;
 
