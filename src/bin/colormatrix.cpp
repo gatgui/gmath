@@ -189,7 +189,10 @@ int main(int argc, char **argv)
          gmath::XYZ srcW = gmath::ChromaticityYtoXYZ(srcCS->getWhitePoint(), 1.0f);
          gmath::XYZ dstW = gmath::ChromaticityYtoXYZ(dstCS->getWhitePoint(), 1.0f);
          CAM = gmath::ChromaticAdaptationMatrix(srcW, dstW, (gmath::ChromaticAdaptationTransform)cat);
-         std::cout << "CAT " << catName << ": " << CAM << std::endl;
+         if (verbose)
+         {
+            std::cout << "CAT " << catName << ": " << CAM << std::endl;
+         }
       }
 
       std::cout << (dstCS->getXYZtoRGBMatrix() * CAM * srcCS->getRGBtoXYZMatrix()) << std::endl;
