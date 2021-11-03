@@ -37,13 +37,13 @@ env = excons.MakeBaseEnv()
 
 staticBuild = (excons.GetArgument("static", "0", int) == 1)
 
-def NoDeprecated(_):
+def NoDeprecated(env): # pylint: disable=redefined-outer-name
    import sys
    if sys.platform == "darwin":
       # On recent OSX (10.9~) GLUT is deprecated
       env.Append(CPPFLAGS=" -Wno-deprecated-declarations")
 
-def RequireGmath(_):
+def RequireGmath(env): # pylint: disable=redefined-outer-name
   # Don't need to set CPPPATH, headers are now installed in output directory
   # Don't need to set LIBPATH, library output directory is automatically added by excons
   env.Append(LIBS=["gmath"])
